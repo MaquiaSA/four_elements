@@ -28,9 +28,17 @@ class FourElementsRunWindow(arcade.Window):
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = ModelSprite('images/dot.png',model=self.world.player)
     
+    def draw_platforms(self, platforms):
+        for p in platforms:
+            arcade.draw_rectangle_filled(p.x + (p.width//2),
+                                         p.y,
+                                         p.width, 10,
+                                         arcade.color.WHITE)
+    
     def on_draw(self):
         arcade.start_render()
         self.player_sprite.draw()
+        self.draw_platforms(self.world.platforms)
     
     def update(self, delta):
         self.world.update(delta)
