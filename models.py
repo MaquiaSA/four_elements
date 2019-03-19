@@ -57,12 +57,12 @@ class Player(Model):
 
     def check_platform(self,p):
         if p.left_most() <= self.x <= p.right_most() and p.bottom_most() <= self.y <= p.y:
-            self.is_jump = False
             if 0 < self.x < self.world.width:
+                self.is_jump = False
                 self.vy = 0
                 self.y = p.y
                 return True
-        if self.x <= 0 or self.x >= self.world.width:
+        if not 0 < self.x < self.world.width:
             return True
         return False
     
@@ -117,12 +117,12 @@ class World:
         self.platforms = self.platform_top() + self.platform_mid() + self.platform_bot()
     
     def platform_top(self):
-        x1,y1,width1 = rint(0,250),rint(400,500),rint(200,300)
-        x2,y2,width2 = rint(400,600),rint(400,500),rint(200,300)
+        x1,y1,width1 = rint(0,250),rint(400,450),rint(200,300)
+        x2,y2,width2 = rint(400,600),rint(400,450),rint(200,300)
         return [Platform(self,x1,y1,width1),Platform(self,x2,y2,width2)]
     
     def platform_mid(self):
-        x1,y1,width1 = rint(50,100),rint(250,300),rint(200,300)
+        x1,y1,width1 = rint(0,100),rint(250,300),rint(200,300)
         x2,y2,width2 = rint(250,300),rint(250,300),rint(200,300)
         x3,y3,width3 = rint(550,650),rint(250,300),rint(200,300)
         if x1 + width1 >= x2:
