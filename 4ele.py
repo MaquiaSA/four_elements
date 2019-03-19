@@ -32,7 +32,7 @@ class FourElementsRunWindow(arcade.Window):
         for p in platforms:
             arcade.draw_rectangle_filled(p.x + (p.width//2),
                                          p.y,
-                                         p.width, 10,
+                                         p.width, p.thick,
                                          arcade.color.WHITE)
     
     def on_draw(self):
