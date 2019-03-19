@@ -35,6 +35,8 @@ class Player(Model):
     def check_platform(self):
         for p in self.world.platforms:
             if p.left_most() <= self.x <= p.right_most() and self.y == p.y:
+                self.is_jump = False
+                self.vy = 0
                 return True
         if self.x <= 0 or self.x >= self.world.width:
             return True
@@ -45,11 +47,12 @@ class Player(Model):
         self.x += DIR_OFFSET[self.direction] * self.vx
         if self.x < 0 or self.x > self.world.width:
             self.direction = DIR_STILL
-        
+
         if self.is_jump or not self.check_platform():
             self.y += self.vy
             self.vy += GRAVITY
 
+        self.check_platform()
 
 
 
