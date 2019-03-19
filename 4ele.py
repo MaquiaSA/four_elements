@@ -4,6 +4,8 @@ from models import World
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
+PLATFORM_DRAW_THICKNESS = 10
+PLATFORM_DRAW_Y_OFFSET = 24
 
 class ModelSprite(arcade.Sprite):
     def __init__(self, *args, **kwargs):
@@ -31,8 +33,8 @@ class FourElementsRunWindow(arcade.Window):
     def draw_platforms(self, platforms):
         for p in platforms:
             arcade.draw_rectangle_filled(p.x + (p.width//2),
-                                         p.y,
-                                         p.width, p.thick,
+                                         p.y - PLATFORM_DRAW_Y_OFFSET,
+                                         p.width, PLATFORM_DRAW_THICKNESS,
                                          arcade.color.WHITE)
     
     def on_draw(self):
