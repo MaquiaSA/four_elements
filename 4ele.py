@@ -28,7 +28,7 @@ class FourElementsRunWindow(arcade.Window):
         arcade.set_background_color(arcade.color.GRAY)
 
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
-        self.player_sprite = ModelSprite('images/player.png',model=self.world.player)
+        self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
     
     def draw_platforms(self, platforms):
         for p in platforms:

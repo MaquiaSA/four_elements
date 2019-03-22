@@ -6,7 +6,7 @@ PLATFORM_THICKNESS = 30
 
 GRAVITY = -1
 MIN_VY = -20
-JUMP_VY = 20
+JUMP_VY = 15
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -28,20 +28,24 @@ class Model:
 class Player(Model):
     def __init__(self,world,x,y):
         super().__init__(world,x,y)
-        self.vx = 10
+        self.vx = 8
         self.vy = 0
         self.direction = DIR_STILL
         self.current_direction = DIR_RIGHT
         self.is_jump = False
+        self.count_jump = 0
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
             self.current_direction = self.direction
         
     def jump(self):
-        if not self.is_jump:
+        if self.count_jump <= 1:
             self.is_jump = True
             self.vy = JUMP_VY
+            self.count_jump += 1
+        
+        
     
     def closest_platform(self):
         dx,dy = self.world.width, self.world.height
@@ -59,6 +63,7 @@ class Player(Model):
         if p.left_most() <= self.x <= p.right_most() and p.bottom_most() <= self.y <= p.y:
             if 0 < self.x < self.world.width:
                 self.is_jump = False
+                self.count_jump = 0
                 self.vy = 0
                 self.y = p.y
                 return True
@@ -73,19 +78,21 @@ class Player(Model):
                 self.x = PLAYER_RADIUS
             if self.x >= self.world.width:
                 self.x = self.world.width - PLAYER_RADIUS
+    
+    def check_floating(self,platform):
+        if self.is_jump or not self.check_platform(platform):
+            self.y += self.vy
+            self.vy += GRAVITY
+        if self.vy < MIN_VY:
+            self.vy = MIN_VY
 
-        
     def update(self,delta):
         self.x += DIR_OFFSET[self.direction] * self.vx
         self.check_out_of_world()
         self.set_current_direction()
 
         platform = self.closest_platform()
-        if self.is_jump or not self.check_platform(platform):
-            self.y += self.vy
-            self.vy += GRAVITY
-        if self.vy < MIN_VY:
-            self.vy = MIN_VY
+        self.check_floating(platform)
         
         self.check_platform(platform)
 
@@ -114,7 +121,8 @@ class World:
         self.width = width
         self.height = height
         self.player = Player(self,50,100)
-        self.platforms = self.platform_top() + self.platform_mid() + self.platform_bot()
+        self.platforms = self.platform_top() + \
+            self.platform_mid() + self.platform_bot()
     
     def platform_top(self):
         x1,y1,width1 = rint(0,250),rint(400,450),rint(200,300)
