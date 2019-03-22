@@ -1,8 +1,9 @@
 import arcade.key
 from random import randint as rint
 
-PLAYER_RADIUS = 20
+PLAYER_RADIUS = 10
 PLATFORM_THICKNESS = 30
+MAP_GRID = 20
 
 GRAVITY = -1
 MIN_VY = -20
@@ -16,7 +17,7 @@ DIR_OFFSET = {DIR_STILL: 0,
               DIR_RIGHT: 1,
               DIR_LEFT: -1}
 
-GROUND_LEVEL = 100
+GROUND_PLATFORM = 5
 
 class Model:
     def __init__(self,world,x,y):
@@ -45,28 +46,40 @@ class Player(Model):
             self.vy = JUMP_VY
             self.count_jump += 1
         
-        
+    def player_left(self):
+        return self.x - PLAYER_RADIUS
+    
+    def player_right(self):
+        return self.x + PLAYER_RADIUS
     
     def closest_platform(self):
         dx,dy = self.world.width, self.world.height
         platform = Platform(self.world,self.world.width,self.world.height,0)
         for p in self.world.platforms:
             if self.y >= p.y and self.y - p.y <= dy:
-                if min(abs(self.x - p.left_most()), abs(self.x - p.right_most())) <= dx:
-                    dx = min(abs(self.x - p.left_most()), abs(self.x - p.right_most()))
+                if min(abs(self.x - p.p_left_most()), abs(self.x - p.p_right_most())) <= dx:
+                    dx = min(abs(self.x - p.p_left_most()), abs(self.x - p.p_right_most()))
                     dy = self.y - p.y
                     platform = p
         return platform
 
+    def stay_on_platform(self,platform):
+        self.is_jump = False
+        self.count_jump = 0
+        self.vy = 0
+        self.y = platform.y
 
-    def check_platform(self,p):
-        if p.left_most() <= self.x <= p.right_most() and p.bottom_most() <= self.y <= p.y:
+    def check_player_boarder(self,player_boarder,platform):
+        if platform.p_left_most() <= player_boarder <= platform.p_right_most() and \
+            platform.p_bottom_most() <= self.y <= platform.y:
             if 0 < self.x < self.world.width:
-                self.is_jump = False
-                self.count_jump = 0
-                self.vy = 0
-                self.y = p.y
+                self.stay_on_platform(platform)
                 return True
+
+
+    def check_platform(self,platform):
+        self.check_player_boarder(self.player_right(),platform)
+        self.check_player_boarder(self.player_left(),platform)
         if not 0 < self.x < self.world.width:
             return True
         return False
@@ -106,13 +119,13 @@ class Platform:
         self.thick = PLATFORM_THICKNESS
         self.world = world
     
-    def left_most(self):
+    def p_left_most(self):
         return self.x
     
-    def right_most(self):
+    def p_right_most(self):
         return self.x + self.width
     
-    def bottom_most(self):
+    def p_bottom_most(self):
         return self.y - self.thick
 
 
@@ -125,42 +138,44 @@ class World:
             self.platform_mid() + self.platform_bot()
     
     def platform_top(self):
-        x1,y1,width1 = rint(0,250),rint(400,450),rint(200,300)
-        x2,y2,width2 = rint(400,600),rint(400,450),rint(200,300)
-        return [Platform(self,x1,y1,width1),
-                Platform(self,x2,y2,width2)]
+        x1,y1,width1 = rint(0,10),rint(20,22),rint(10,15)
+        x2,y2,width2 = rint(26,30),rint(20,22),rint(10,15)
+        return [self.platform_grid(x1,y1,width1),
+                self.platform_grid(x2,y2,width2)]
     
     def platform_mid(self):
-        x1,y1,width1 = rint(0,100),rint(250,300),rint(200,300)
-        x2,y2,width2 = rint(250,300),rint(250,300),rint(200,300)
-        x3,y3,width3 = rint(550,650),rint(250,300),rint(200,300)
+        x1,y1,width1 = rint(0,5),rint(12,15),rint(10,15)
+        x2,y2,width2 = rint(25,30),rint(10,15),rint(10,15)
+        x3,y3,width3 = rint(55,65),rint(12,15),rint(10,15)
         if x1 + width1 >= x2:
-            return [Platform(self,x1,y1,x2 + width2 - x1),
-                    Platform(self,x3,y3,width3)]
+            return [self.platform_grid(x1,y1,x2 + width2 - x1),
+                    self.platform_grid(x3,y3,width3)]
         if x2 + width2 >= x3:
-            return [Platform(self,x2,y2,x3 + width3 - x2),
-                    Platform(self,x1,y1,width1)]
-        return [Platform(self,x1,y1,width1),
-                Platform(self,x2,y2,width2),
-                Platform(self,x3,y3,width3)]
+            return [self.platform_grid(x2,y2,x3 + width3 - x2),
+                    self.platform_grid(x1,y1,width1)]
+        return [self.platform_grid(x1,y1,width1),
+                self.platform_grid(x2,y2,width2),
+                self.platform_grid(x3,y3,width3)]
     
     def platform_bot(self):
-        x1,width1 = 0,rint(100,300)
-        x2,width2 = rint(200,400),rint(200,300)
-        x3,width3 = rint(500,600),300
+        x1,width1 = 0,rint(5,15)
+        x2,width2 = rint(10,20),rint(10,15)
+        x3,width3 = rint(25,30),15
         if x1 + width1 >= x2:
             if x2 + width2 >= x3:
-                return [Platform(self,0,GROUND_LEVEL,self.width)]
+                return [self.platform_grid(0,GROUND_PLATFORM,self.width)]
             else:
-                return [Platform(self,x1,GROUND_LEVEL,x2 + width2 - x1),
-                        Platform(self,x3,GROUND_LEVEL,width3)]
+                return [self.platform_grid(x1,GROUND_PLATFORM,x2 + width2 - x1),
+                        self.platform_grid(x3,GROUND_PLATFORM,width3)]
         if x2 + width2 >= x3:
-            return [Platform(self,x2,GROUND_LEVEL,x3 + width3 - x2),
-                    Platform(self,x1,GROUND_LEVEL,width1)]
-        return [Platform(self,x1,GROUND_LEVEL,width1),
-                Platform(self,x2,GROUND_LEVEL,width2),
-                Platform(self,x3,GROUND_LEVEL,width3)]
+            return [self.platform_grid(x2,GROUND_PLATFORM,x3 + width3 - x2),
+                    self.platform_grid(x1,GROUND_PLATFORM,width1)]
+        return [self.platform_grid(x1,GROUND_PLATFORM,width1),
+                self.platform_grid(x2,GROUND_PLATFORM,width2),
+                self.platform_grid(x3,GROUND_PLATFORM,width3)]
     
+    def platform_grid(self,x,y,width):
+        return Platform(self,x*MAP_GRID,y*MAP_GRID,width*MAP_GRID)
 
     def update(self,delta):
         self.player.update(delta)
