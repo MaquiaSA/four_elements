@@ -29,7 +29,7 @@ class FourElementsRunWindow(arcade.Window):
 
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
-    
+        
     def draw_platforms(self, platforms):
         for p in platforms:
             arcade.draw_rectangle_filled(p.x + (p.width//2),
@@ -41,7 +41,9 @@ class FourElementsRunWindow(arcade.Window):
         arcade.start_render()
         self.player_sprite.draw()
         self.draw_platforms(self.world.platforms)
-    
+        for m in self.world.monster:
+            ModelSprite('images/dot.png',model=m).draw()
+            
     def update(self, delta):
         self.world.update(delta)
     
