@@ -21,6 +21,16 @@ class ModelSprite(arcade.Sprite):
         self.sync_with_model()
         super().draw()
 
+class BulletSprite:
+    def __init__(self, bullet):
+        self.bullet = bullet
+        self.bullet_sprite = arcade.Sprite('images/coin.png')
+
+    def draw(self):
+        for b in self.bullet:
+            self.bullet_sprite.set_position(b.x,b.y)
+            self.bullet_sprite.draw()
+
 class FourElementsRunWindow(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
@@ -29,6 +39,7 @@ class FourElementsRunWindow(arcade.Window):
 
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
+        self.bullet_sprite = BulletSprite(self.world.bullet)
         
     def draw_platforms(self, platforms):
         for p in platforms:
@@ -43,15 +54,20 @@ class FourElementsRunWindow(arcade.Window):
         self.draw_platforms(self.world.platforms)
         for m in self.world.monster:
             ModelSprite('images/dot.png',model=m).draw()
+        self.bullet_sprite.draw()
             
     def update(self, delta):
         self.world.update(delta)
+        
     
     def on_key_press(self, key, key_modifiers):
         self.world.on_key_press(key, key_modifiers)
     
     def on_key_release(self, key, key_modifiers):
         self.world.on_key_release(key, key_modifiers)
+    
+    # def on_mouse_press(self,x,y,button,modifiers):
+    #     self.world.on_mouse_press(x,y,button,modifiers)
 
 
 def main():

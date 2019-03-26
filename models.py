@@ -1,16 +1,23 @@
 import arcade.key
+import time
 from random import randint as rint
+from random import choice
 
-PLAYER_RADIUS = 10
 PLATFORM_THICKNESS = 30
 GROUND_THICKNESS = 100
 MAP_GRID = 50
 
+PLAYER_RADIUS = 10
 GRAVITY = -1
 MIN_VY = -20
 JUMP_VY = 15
-PLAYER_VX = 8
+PLAYER_VX = 7
+
 MONSTER_VX = 3
+MONSTER_RADIUS = 40
+
+BULLET_VX = 4
+BULLET_RADIUS = 32
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -29,7 +36,6 @@ class Model:
         self.y = y
         self.vy = 0
         self.direction = DIR_STILL
-
 
 class Player(Model):
     def __init__(self,world,x,y):
@@ -60,8 +66,10 @@ class Player(Model):
         platform = Platform(self.world,self.world.width,self.world.height,0)
         for p in self.world.platforms:
             if self.y >= p.y and self.y - p.y <= dy:
-                if min(abs(self.x - p.platform_leftmost()), abs(self.x - p.platform_rightmost())) <= dx:
-                    dx = min(abs(self.x - p.platform_leftmost()), abs(self.x - p.platform_rightmost()))
+                if min(abs(self.x - p.platform_leftmost()),
+                    abs(self.x - p.platform_rightmost())) <= dx:
+                    dx = min(abs(self.x - p.platform_leftmost()), 
+                        abs(self.x - p.platform_rightmost()))
                     dy = self.y - p.y
                     platform = p
         return platform
@@ -78,7 +86,6 @@ class Player(Model):
             if 0 < self.x < self.world.width:
                 self.stay_on_platform(platform)
                 return True
-
 
     def check_platform(self,platform):
         self.check_player_boarder(self.player_right(),platform)
@@ -113,6 +120,22 @@ class Player(Model):
         self.check_platform(platform)
 
 
+class Bullet:
+    def __init__(self,world,x,y):
+        self.world = world
+        self.x = x
+        self.y = y
+    
+    def move(self):
+        direction = DIR_OFFSET[self.world.player.current_direction]
+        self.x += BULLET_VX * direction
+    
+    def hit(self,monster):
+        if self.y - BULLET_RADIUS <= monster.y <= self.y + BULLET_RADIUS and \
+            self.x - BULLET_RADIUS <= monster.x <= self.x + BULLET_RADIUS:
+            return True
+
+
 class Platform:
     def __init__(self,world,x,y,width):
         self.x = x
@@ -138,8 +161,17 @@ class Monster(Model):
     def __init__(self,world,x,y):
         super().__init__(world,x,y)
         self.vx = MONSTER_VX
+        self.current_direction = DIR_STILL
+    
+    def move(self):
+        self.direction = choice(list(DIR_OFFSET))
+        if self.direction != DIR_STILL:
+            self.current_direction = self.direction
+        self.x += self.vx * DIR_OFFSET[self.direction]
+
     
     def update(self,delta):
+        # self.move()
         pass
 
 
@@ -151,6 +183,7 @@ class World:
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
+        self.bullet = []
     
     def platform_top(self):
         x1,y1,width1 = rint(0,4),rint(8,9),rint(4,6)
@@ -196,12 +229,10 @@ class World:
         monster = []
         for p in self.platforms:
             monster_x1 = rint(p.platform_leftmost(),p.platform_rightmost())
-            monster.append(
-                Monster(self,monster_x1,p.y))
+            monster.append(Monster(self,monster_x1,p.y))
             if p.width > 250:
                 monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
-                monster.append(
-                    Monster(self,monster_x2,p.y))
+                monster.append(Monster(self,monster_x2,p.y))
         return monster
 
 
@@ -209,6 +240,12 @@ class World:
         self.player.update(delta)
         for m in self.monster:
             m.update(delta)
+        for b in self.bullet:
+            b.move()
+            for m in self.monster:
+                if b.hit(m):
+                    self.monster.remove(m)
+                    self.bullet.remove(b)
     
     def on_key_press(self,key,key_modifiers):
         if key == arcade.key.LEFT:
@@ -217,7 +254,16 @@ class World:
             self.player.direction = DIR_RIGHT
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
+        elif key == arcade.key.Z:
+            bullet = Bullet(self, self.player.x, self.player.y)
+            self.bullet.append(bullet)
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.LEFT or key == arcade.key.RIGHT:
             self.player.direction = DIR_STILL
+    
+    # def on_mouse_press(self,x,y,button,modifiers):
+    #     if button == arcade.MOUSE_BUTTON_RIGHT:
+    #         bullet = Bullet(self, self.player.x, self.player.y)
+    #         self.bullet.append(bullet)
+    #         bullet.move()
