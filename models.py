@@ -1,7 +1,7 @@
 import arcade.key
 import time
 from random import randint as rint
-from random import choice
+from random import choice,randrange
 
 PLATFORM_THICKNESS = 30
 GROUND_THICKNESS = 100
@@ -13,7 +13,7 @@ MIN_VY = -20
 JUMP_VY = 15
 PLAYER_VX = 7
 
-MONSTER_VX = 3
+MONSTER_VX = 2
 MONSTER_RADIUS = 40
 
 BULLET_VX = 10
@@ -26,6 +26,9 @@ DIR_LEFT = 2
 DIR_OFFSET = {DIR_STILL: 0,
               DIR_RIGHT: 1,
               DIR_LEFT: -1}
+
+MONSTER_DIR_OFFSET = {DIR_RIGHT: 1,
+                      DIR_LEFT: -1}
 
 GROUND_PLATFORM = 2
 
@@ -63,7 +66,7 @@ class Player(Model):
     
     def closest_platform(self):
         dx,dy = self.world.width, self.world.height
-        platform = Platform(self.world,self.world.width,self.world.height,0)
+        platforms = Platform(self.world,self.world.width,self.world.height,0)
         for p in self.world.platforms:
             if self.y >= p.y and self.y - p.y <= dy:
                 if min(abs(self.x - p.platform_leftmost()),
@@ -71,25 +74,25 @@ class Player(Model):
                     dx = min(abs(self.x - p.platform_leftmost()), 
                         abs(self.x - p.platform_rightmost()))
                     dy = self.y - p.y
-                    platform = p
-        return platform
+                    platforms = p
+        return platforms
 
-    def stay_on_platform(self,platform):
+    def stay_on_platform(self,platforms):
         self.is_jump = False
         self.count_jump = 0
         self.vy = 0
-        self.y = platform.y
+        self.y = platforms.y
 
-    def check_player_boarder(self,player_boarder,platform):
-        if platform.platform_leftmost() <= player_boarder <= platform.platform_rightmost() and \
-            platform.platform_bottommost() <= self.y <= platform.y:
+    def check_player_boarder(self,player_boarder,platforms):
+        if platforms.platform_leftmost() <= player_boarder <= platforms.platform_rightmost() and \
+            platforms.platform_bottommost() <= self.y <= platforms.y:
             if 0 < self.x < self.world.width:
-                self.stay_on_platform(platform)
+                self.stay_on_platform(platforms)
                 return True
 
-    def check_platform(self,platform):
-        self.check_player_boarder(self.player_right(),platform)
-        self.check_player_boarder(self.player_left(),platform)
+    def check_platform(self,platforms):
+        self.check_player_boarder(self.player_right(),platforms)
+        self.check_player_boarder(self.player_left(),platforms)
         if not 0 < self.x < self.world.width:
             return True
         return False
@@ -102,8 +105,8 @@ class Player(Model):
             if self.x >= self.world.width:
                 self.x = self.world.width - PLAYER_RADIUS
     
-    def check_floating(self,platform):
-        if self.is_jump or not self.check_platform(platform):
+    def check_floating(self,platforms):
+        if self.is_jump or not self.check_platform(platforms):
             self.y += self.vy
             self.vy += GRAVITY
         if self.vy < MIN_VY:
@@ -114,10 +117,10 @@ class Player(Model):
         self.check_out_of_world()
         self.set_current_direction()
 
-        platform = self.closest_platform()
-        self.check_floating(platform)
+        platforms = self.closest_platform()
+        self.check_floating(platforms)
         
-        self.check_platform(platform)
+        self.check_platform(platforms)
 
 
 class Bullet:
@@ -174,20 +177,69 @@ class Platform:
 
 
 class Monster(Model):
-    def __init__(self,world,x,y):
+    TICK = 0
+    def __init__(self,world,x,y,platforms):
         super().__init__(world,x,y)
+        self.platforms = platforms
         self.vx = MONSTER_VX
+        self.direction = None
         self.current_direction = DIR_STILL
+        self.update_tick = 60*choice([0.5,1,2])
+    
+    def random_direction(self):
+        self.direction = choice(list(MONSTER_DIR_OFFSET))
     
     def move(self):
-        self.direction = choice(list(DIR_OFFSET))
         if self.direction != DIR_STILL:
             self.current_direction = self.direction
         self.x += self.vx * DIR_OFFSET[self.direction]
 
+    def random_moving(self):
+        self.TICK += 1
+        if self.TICK % self.update_tick == 0:
+            if self.direction == DIR_STILL:
+                self.vx = MONSTER_VX
+                if self.x <= self.platforms.platform_leftmost():
+                    self.direction = DIR_RIGHT
+                if self.x <= 10:
+                    self.direction = DIR_RIGHT
+                if self.x >= self.platforms.platform_rightmost():
+                    self.direction = DIR_LEFT
+                if self.x >= self.world.width - 10:
+                    self.direction = DIR_LEFT
+                else:
+                    self.random_direction()
+            else:
+                self.direction = DIR_STILL
+    
+    def check_monster_boarder(self):
+        if self.x <= 10 or \
+            self.x >= self.world.width - 10 or \
+            self.x <= self.platforms.platform_leftmost() or \
+            self.x >= self.platforms.platform_rightmost():
+            return False
+        return True
+    
+    def monster_boarder(self):
+        if not self.check_monster_boarder():
+            if self.x <= 10:
+                self.x = 10
+            if self.x >= self.world.width - 10:
+                self.x = self.world.width - 10
+            if self.x <= self.platforms.platform_leftmost():
+                self.x = self.platforms.platform_leftmost()
+            if self.x >= self.platforms.platform_rightmost():
+                self.x = self.platforms.platform_rightmost()
+            self.vx = 0
+            self.direction = DIR_STILL
+            
     
     def update(self,delta):
-        # self.move()
+        if self.direction is None:
+            self.random_direction()
+        self.move()
+        self.monster_boarder()
+        self.random_moving()
         pass
 
 
@@ -245,10 +297,10 @@ class World:
         monster = []
         for p in self.platforms:
             monster_x1 = rint(p.platform_leftmost(),p.platform_rightmost())
-            monster.append(Monster(self,monster_x1,p.y))
-            if p.width > 250:
-                monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
-                monster.append(Monster(self,monster_x2,p.y))
+            monster.append(Monster(self,monster_x1,p.y,p))
+            # if p.width > 250:
+            #     monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
+            #     monster.append(Monster(self,monster_x2,p.y))
         return monster
 
 
@@ -267,9 +319,6 @@ class World:
             self.player.direction = DIR_RIGHT
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
-        elif key == arcade.key.Z:
-            bullet = Bullet(self, self.player.x, self.player.y)
-            self.bullet.append(bullet)
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.A or key == arcade.key.D:
@@ -279,3 +328,4 @@ class World:
         if button == arcade.MOUSE_BUTTON_RIGHT:
             bullet = Bullet(self, self.player.x, self.player.y)
             self.bullet.append(bullet)
+
