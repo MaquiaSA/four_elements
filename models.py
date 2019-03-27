@@ -2,6 +2,7 @@ import arcade.key
 import time
 from random import randint as rint
 from random import choice,randrange
+from copy import deepcopy
 
 PLATFORM_THICKNESS = 30
 GROUND_THICKNESS = 100
@@ -18,6 +19,7 @@ MONSTER_RADIUS = 40
 
 BULLET_VX = 10
 BULLET_RADIUS = 32
+BULLET_RANGE = 250
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -126,7 +128,8 @@ class Player(Model):
 class Bullet:
     def __init__(self,world,x,y):
         self.world = world
-        self.x = x
+        self.init_x = x
+        self.x = deepcopy(self.init_x)
         self.y = y
         self.direction = None
     
@@ -152,6 +155,8 @@ class Bullet:
                 self.world.monster.remove(m)
                 self.world.bullet.remove(self)
         if self.out_of_world() and not self.world.bullet:
+            self.world.bullet.remove(self)
+        if abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.bullet.remove(self)
 
 
