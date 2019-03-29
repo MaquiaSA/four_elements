@@ -102,9 +102,9 @@ class Player(Model):
     def check_out_of_world(self):
         if self.x <= PLAYER_RADIUS or self.x - PLAYER_RADIUS >= self.world.width:
             self.direction = DIR_STILL
-            if self.x <= 0:
+            if self.player_left() <= 0:
                 self.x = PLAYER_RADIUS
-            if self.x >= self.world.width:
+            if self.player_right() >= self.world.width:
                 self.x = self.world.width - PLAYER_RADIUS
     
     def check_floating(self,platforms):
@@ -204,13 +204,11 @@ class Monster(Model):
         if self.TICK % self.update_tick == 0:
             if self.direction == DIR_STILL:
                 self.vx = MONSTER_VX
-                if self.x <= self.platforms.platform_leftmost():
+                if self.x <= self.platforms.platform_leftmost() or\
+                    self.x <= 10:
                     self.direction = DIR_RIGHT
-                if self.x <= 10:
-                    self.direction = DIR_RIGHT
-                if self.x >= self.platforms.platform_rightmost():
-                    self.direction = DIR_LEFT
-                if self.x >= self.world.width - 10:
+                if self.x >= self.platforms.platform_rightmost() or\
+                    self.x >= self.world.width - 10:
                     self.direction = DIR_LEFT
                 else:
                     self.random_direction()
