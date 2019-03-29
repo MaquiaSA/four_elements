@@ -65,9 +65,6 @@ class FourElementsRunWindow(arcade.Window):
     
     def on_key_release(self, key, key_modifiers):
         self.world.on_key_release(key, key_modifiers)
-    
-    def on_mouse_press(self,x,y,button,modifiers):
-        self.world.on_mouse_press(x,y,button,modifiers)
 
 
 def main():

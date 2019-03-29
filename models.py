@@ -322,13 +322,10 @@ class World:
             self.player.direction = DIR_RIGHT
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
+        elif key == arcade.key.L:
+            bullet = Bullet(self, self.player.x, self.player.y)
+            self.bullet.append(bullet)
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.A or key == arcade.key.D:
             self.player.direction = DIR_STILL
-    
-    def on_mouse_press(self,x,y,button,modifiers):
-        if button == arcade.MOUSE_BUTTON_RIGHT:
-            bullet = Bullet(self, self.player.x, self.player.y)
-            self.bullet.append(bullet)
-
