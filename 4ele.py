@@ -56,6 +56,7 @@ class FourElementsRunWindow(arcade.Window):
         for m in self.world.monster:
             ModelSprite('images/dot.png',model=m).draw()
         self.bullet_sprite.draw()
+        self.monster_bullet_sprite.draw()
             
     def update(self, delta):
         self.world.update(delta)
