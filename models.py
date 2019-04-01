@@ -16,7 +16,7 @@ PLAYER_VX = 7
 
 MONSTER_VX = 2
 MONSTER_RADIUS = 40
-DETECT_PLAYER_X = 150
+DETECT_PLAYER_X = 250
 DETECT_PLAYER_Y = 30
 M_BULLET_VX = 10
 
@@ -351,10 +351,17 @@ class World:
         for p in self.platforms:
             monster_x1 = rint(p.platform_leftmost(),p.platform_rightmost())
             if 0 <= monster_x1 <= self.width:
-                monster.append(Monster(self,monster_x1,p.y,p))
-            # if p.width > 250:
-            #     monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
-            #     monster.append(Monster(self,monster_x2,p.y))
+                if p.y == GROUND_PLATFORM*MAP_GRID and abs(monster_x1-self.player.x) > BULLET_RANGE:
+                    monster.append(Monster(self,monster_x1,p.y,p))
+                elif p.y != GROUND_PLATFORM*MAP_GRID:
+                    monster.append(Monster(self,monster_x1,p.y,p))
+            if p.width > 250:
+                monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
+                if 0 <= monster_x2 <= self.width:
+                    if p.y == GROUND_PLATFORM*MAP_GRID and abs(monster_x2-self.player.x) > BULLET_RANGE:
+                        monster.append(Monster(self,monster_x2,p.y,p))
+                    elif p.y != GROUND_PLATFORM*MAP_GRID:
+                        monster.append(Monster(self,monster_x2,p.y,p))
         return monster
 
     def monster_detect_player(self,monster):
