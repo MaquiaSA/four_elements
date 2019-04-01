@@ -16,6 +16,9 @@ PLAYER_VX = 7
 
 MONSTER_VX = 2
 MONSTER_RADIUS = 40
+DETECT_PLAYER_X = 150
+DETECT_PLAYER_Y = 30
+M_BULLET_VX = 10
 
 BULLET_VX = 10
 BULLET_RADIUS = 32
@@ -133,6 +136,15 @@ class Bullet:
         self.y = y
         self.direction = None
     
+    def out_of_world(self):
+        if self.x + BULLET_RADIUS < 0 or self.x - BULLET_RADIUS > self.world.width:
+            return True
+
+
+class PlayerBullet(Bullet):
+    def __init__(self,world,x,y):
+        super().__init__(world,x,y)
+    
     def move(self):
         prev_direction = self.world.player.current_direction
         if not prev_direction == self.world.player.current_direction or self.direction is None:
@@ -143,11 +155,7 @@ class Bullet:
         if self.y - BULLET_RADIUS <= monster.y <= self.y + BULLET_RADIUS and \
             self.x - BULLET_RADIUS <= monster.x <= self.x + BULLET_RADIUS:
             return True
-    
-    def out_of_world(self):
-        if self.x + BULLET_RADIUS < 0 or self.x - BULLET_RADIUS > self.world.width:
-            return True
-    
+
     def update(self,delta):
         self.move()
         for m in self.world.monster:
@@ -158,6 +166,28 @@ class Bullet:
             self.world.bullet.remove(self)
         if abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.bullet.remove(self)
+
+class MonsterBullet(Bullet):
+    def __init__(self,world,x,y,monster):
+        super().__init__(world,x,y)
+        self.monster = monster
+    
+    def move(self):
+        self.direction = self.monster.current_direction
+        self.x += M_BULLET_VX * DIR_OFFSET[self.direction]
+    
+    def hit(self):
+        if self.y - BULLET_RADIUS <= self.world.player.y <= self.y + BULLET_RADIUS and \
+            self.x - BULLET_RADIUS <= self.world.player.x <= self.x + BULLET_RADIUS:
+            return True
+    
+    def update(self,delta):
+        self.move()
+        if not self.world.monster_bullet:
+            if self.hit() or\
+                abs(self.x - self.init_x) >= BULLET_RANGE or\
+                    self.out_of_world():
+                self.world.monster_bullet.remove(self)
 
 
 class Platform:
@@ -198,6 +228,8 @@ class Monster(Model):
         if self.direction != DIR_STILL:
             self.current_direction = self.direction
         self.x += self.vx * DIR_OFFSET[self.direction]
+        self.monster_boarder()
+        self.random_moving()
 
     def random_moving(self):
         self.TICK += 1
@@ -235,15 +267,24 @@ class Monster(Model):
                 self.x = self.platforms.platform_rightmost()
             self.vx = 0
             self.direction = DIR_STILL
-            
+    
+    def check_detect_player(self):
+        if abs(self.world.player.y - self.y) <= DETECT_PLAYER_Y:
+            self.direction = DIR_STILL
+            if self.world.player.x - self.x <= DETECT_PLAYER_X:
+                self.current_direction = DIR_LEFT
+            elif self.world.player.x - self.x >= DETECT_PLAYER_X:
+                self.current_direction = DIR_RIGHT
+            return True
+        return False
     
     def update(self,delta):
         if self.direction is None:
             self.random_direction()
         self.move()
-        self.monster_boarder()
-        self.random_moving()
-        pass
+        # self.monster_boarder()
+        # self.random_moving()
+        self.check_detect_player()
 
 
 class World:
@@ -255,6 +296,7 @@ class World:
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
         self.bullet = []
+        self.monster_bullet = []
     
     def platform_top(self):
         x1,y1,width1 = rint(0,4),rint(8,9),rint(4,6)
@@ -306,13 +348,20 @@ class World:
             #     monster.append(Monster(self,monster_x2,p.y))
         return monster
 
+    def monster_detect_player(self,monster):
+        if monster.check_detect_player() and monster.TICK % 60 == 0:
+            m_bullet = MonsterBullet(self,monster.x,monster.y,monster)
+            self.monster_bullet.append(m_bullet)
 
     def update(self,delta):
         self.player.update(delta)
         for m in self.monster:
             m.update(delta)
+            self.monster_detect_player(m)
         for b in self.bullet:
             b.update(delta)
+        for mb in self.monster_bullet:
+            mb.update(delta)
 
     
     def on_key_press(self,key,key_modifiers):
@@ -323,9 +372,11 @@ class World:
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
         elif key == arcade.key.L:
-            bullet = Bullet(self, self.player.x, self.player.y)
+            bullet = PlayerBullet(self, self.player.x, self.player.y)
             self.bullet.append(bullet)
     
     def on_key_release(self, key, key_modifiers):
-        if key == arcade.key.A or key == arcade.key.D:
+        if key == arcade.key.A and self.player.direction == DIR_LEFT:
+            self.player.direction = DIR_STILL
+        if key == arcade.key.D and self.player.direction == DIR_RIGHT:
             self.player.direction = DIR_STILL

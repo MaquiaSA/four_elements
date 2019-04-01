@@ -40,6 +40,7 @@ class FourElementsRunWindow(arcade.Window):
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
         self.bullet_sprite = BulletSprite(self.world.bullet)
+        self.monster_bullet_sprite = BulletSprite(self.world.monster_bullet)
         
     def draw_platforms(self, platforms):
         for p in platforms:
