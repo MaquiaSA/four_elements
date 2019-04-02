@@ -35,13 +35,16 @@ class FourElementsRunWindow(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
  
+        self.setup()
+    
+    def setup(self):
         arcade.set_background_color(arcade.color.GRAY)
 
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
         self.bullet_sprite = BulletSprite(self.world.bullet)
         self.monster_bullet_sprite = BulletSprite(self.world.monster_bullet)
-        
+
     def draw_platforms(self, platforms):
         for p in platforms:
             arcade.draw_rectangle_filled(p.x + (p.width//2),

@@ -13,6 +13,8 @@ GRAVITY = -1
 MIN_VY = -20
 JUMP_VY = 15
 PLAYER_VX = 7
+PLAYER_STARTX = 50
+PLAYER_STARTY = 100
 
 MONSTER_VX = 2
 MONSTER_RADIUS = 40
@@ -299,12 +301,18 @@ class World:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.player = Player(self,50,100)
+        self.player = Player(self,PLAYER_STARTX,PLAYER_STARTY)
+        self.bullet = []
+        self.monster_bullet = []
+        self.setup()
+    
+    def setup(self):
+        self.player.x = PLAYER_STARTX
+        self.player.y = PLAYER_STARTY
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
-        self.bullet = []
-        self.monster_bullet = []
+
     
     def platform_top(self):
         x1,y1,width1 = rint(0,4),rint(8,9),rint(4,6)
@@ -378,6 +386,8 @@ class World:
             b.update(delta)
         for mb in self.monster_bullet:
             mb.update(delta)
+        if not self.monster:
+            self.setup()
 
     
     def on_key_press(self,key,key_modifiers):
