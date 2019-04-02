@@ -60,6 +60,8 @@ class FourElementsRunWindow(arcade.Window):
             ModelSprite('images/dot.png',model=m).draw()
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
+        arcade.draw_text(str(self.world.player.health), 100, SCREEN_HEIGHT - 100, arcade.color.BLACK, 20)
+
             
     def update(self, delta):
         self.world.update(delta)

@@ -15,6 +15,7 @@ JUMP_VY = 15
 PLAYER_VX = 7
 PLAYER_STARTX = 50
 PLAYER_STARTY = 100
+HEALTH = 100
 
 MONSTER_VX = 2
 MONSTER_RADIUS = 40
@@ -22,7 +23,7 @@ DETECT_PLAYER_X = 250
 DETECT_PLAYER_Y = 30
 M_BULLET_VX = 10
 
-BULLET_VX = 10
+BULLET_VX = 15
 BULLET_RADIUS = 32
 BULLET_RANGE = 250
 
@@ -54,6 +55,7 @@ class Player(Model):
         self.current_direction = DIR_RIGHT
         self.is_jump = False
         self.count_jump = 0
+        self.health = HEALTH
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -111,6 +113,8 @@ class Player(Model):
                 self.x = PLAYER_RADIUS
             if self.player_right() >= self.world.width:
                 self.x = self.world.width - PLAYER_RADIUS
+        if self.y < 0:
+            self.health = 0
     
     def check_floating(self,platforms):
         if self.is_jump or not self.check_platform(platforms):
@@ -191,6 +195,7 @@ class MonsterBullet(Bullet):
         self.move()
         if self.hit():
             self.world.monster_bullet.remove(self)
+            self.world.player.health -= 5
         if abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.monster_bullet.remove(self)
         if self.out_of_world() and self.world.monster_bullet != []:
