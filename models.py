@@ -23,9 +23,9 @@ DETECT_PLAYER_X = 250
 DETECT_PLAYER_Y = 30
 M_BULLET_VX = 10
 
-BULLET_VX = 15
+BULLET_VX = 20
 BULLET_RADIUS = 32
-BULLET_RANGE = 250
+BULLET_RANGE = 300
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -164,14 +164,15 @@ class PlayerBullet(Bullet):
 
     def update(self,delta):
         self.move()
+        if self.world.bullet != []:
+            if self.out_of_world():
+                self.world.bullet.remove(self)
+            elif self.x - self.init_x > BULLET_RANGE or self.init_x - self.x > BULLET_RANGE:
+                self.world.bullet.remove(self)
         for m in self.world.monster:
             if self.hit(m):
                 self.world.monster.remove(m)
                 self.world.bullet.remove(self)
-        if self.out_of_world() and not self.world.bullet:
-            self.world.bullet.remove(self)
-        if abs(self.x - self.init_x) >= BULLET_RANGE:
-            self.world.bullet.remove(self)
 
 class MonsterBullet(Bullet):
     def __init__(self,world,x,y,monster):
