@@ -61,6 +61,13 @@ class FourElementsRunWindow(arcade.Window):
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         arcade.draw_text(str(self.world.player.health), 100, SCREEN_HEIGHT - 100, arcade.color.BLACK, 20)
+        arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+        if self.world.player.is_dead:
+            arcade.draw_rectangle_filled(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                                        SCREEN_WIDTH, SCREEN_HEIGHT, arcade.color.BLACK)
+            arcade.draw_text("YOU  DIED",
+                         SCREEN_WIDTH // 2, SCREEN_HEIGHT/2 + 10, arcade.color.RED, 90, width=SCREEN_WIDTH, align="center",
+                         anchor_x="center", anchor_y="center")
 
             
     def update(self, delta):

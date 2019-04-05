@@ -16,16 +16,19 @@ PLAYER_VX = 7
 PLAYER_STARTX = 50
 PLAYER_STARTY = 100
 HEALTH = 100
+MELEE_RANGE = 50
 
 MONSTER_VX = 2
 MONSTER_RADIUS = 40
 DETECT_PLAYER_X = 250
 DETECT_PLAYER_Y = 30
 M_BULLET_VX = 10
+MONSTER_DMG = 5
 
 BULLET_VX = 20
 BULLET_RADIUS = 32
 BULLET_RANGE = 300
+BULLET_DMG = 60
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -56,6 +59,7 @@ class Player(Model):
         self.is_jump = False
         self.count_jump = 0
         self.health = HEALTH
+        self.is_dead = False
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -66,12 +70,24 @@ class Player(Model):
             self.is_jump = True
             self.vy = JUMP_VY
             self.count_jump += 1
+    
+    def check_dead(self):
+        if self.health <= 0:
+            self.is_dead = True
+        else:
+            self.is_dead = False
         
     def player_left(self):
         return self.x - PLAYER_RADIUS
     
     def player_right(self):
         return self.x + PLAYER_RADIUS
+        
+    def player_top(self):
+        return self.y + PLAYER_RADIUS
+        
+    def player_bot(self):
+        return self.y - PLAYER_RADIUS
     
     def closest_platform(self):
         dx,dy = self.world.width, self.world.height
@@ -132,6 +148,7 @@ class Player(Model):
         self.check_floating(platforms)
         
         self.check_platform(platforms)
+        self.check_dead()
 
 
 class Bullet:
@@ -164,15 +181,19 @@ class PlayerBullet(Bullet):
 
     def update(self,delta):
         self.move()
-        if self.world.bullet != []:
-            if self.out_of_world():
+        if self.out_of_world():
+            if self.world.bullet != []:
                 self.world.bullet.remove(self)
-            elif self.x - self.init_x > BULLET_RANGE or self.init_x - self.x > BULLET_RANGE:
+        elif self.x - self.init_x > BULLET_RANGE or self.init_x - self.x > BULLET_RANGE:
+            if self.world.bullet != []:
                 self.world.bullet.remove(self)
         for m in self.world.monster:
             if self.hit(m):
-                self.world.monster.remove(m)
-                self.world.bullet.remove(self)
+                m.health -= BULLET_DMG
+                if m.health <= 0:
+                    self.world.monster.remove(m)
+                if self in self.world.bullet:
+                    self.world.bullet.remove(self)
 
 class MonsterBullet(Bullet):
     def __init__(self,world,x,y,monster):
@@ -226,13 +247,14 @@ class Platform:
 
 class Monster(Model):
     TICK = 0
-    def __init__(self,world,x,y,platforms):
+    def __init__(self,world,x,y,platforms,health):
         super().__init__(world,x,y)
         self.platforms = platforms
         self.vx = MONSTER_VX
         self.direction = None
         self.current_direction = DIR_STILL
         self.update_tick = 60*choice([0.5,1,2])
+        self.health = health
     
     def random_direction(self):
         self.direction = choice(list(MONSTER_DIR_OFFSET))
@@ -310,11 +332,15 @@ class World:
         self.player = Player(self,PLAYER_STARTX,PLAYER_STARTY)
         self.bullet = []
         self.monster_bullet = []
+        self.monster_health = 100
+        self.floor = 0
         self.setup()
     
     def setup(self):
+        self.floor += 1
         self.player.x = PLAYER_STARTX
         self.player.y = PLAYER_STARTY
+        self.player.is_dead = False
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
@@ -360,28 +386,42 @@ class World:
     def platform_grid(self,x,y,width):
         return Platform(self,x*MAP_GRID,y*MAP_GRID,width*MAP_GRID)
     
+    def mon_health(self):
+        return self.monster_health + (self.floor*10)
+    
     def generate_monster(self):
         monster = []
         for p in self.platforms:
             monster_x1 = rint(p.platform_leftmost(),p.platform_rightmost())
             if 0 <= monster_x1 <= self.width:
                 if p.y == GROUND_PLATFORM*MAP_GRID and abs(monster_x1-self.player.x) > BULLET_RANGE:
-                    monster.append(Monster(self,monster_x1,p.y,p))
+                    monster.append(Monster(self,monster_x1,p.y,p,self.mon_health()))
                 elif p.y != GROUND_PLATFORM*MAP_GRID:
-                    monster.append(Monster(self,monster_x1,p.y,p))
+                    monster.append(Monster(self,monster_x1,p.y,p,self.mon_health()))
             if p.width > 250:
                 monster_x2 = rint(p.platform_leftmost(),p.platform_rightmost())
                 if 0 <= monster_x2 <= self.width:
                     if p.y == GROUND_PLATFORM*MAP_GRID and abs(monster_x2-self.player.x) > BULLET_RANGE:
-                        monster.append(Monster(self,monster_x2,p.y,p))
+                        monster.append(Monster(self,monster_x2,p.y,p,self.mon_health()))
                     elif p.y != GROUND_PLATFORM*MAP_GRID:
-                        monster.append(Monster(self,monster_x2,p.y,p))
+                        monster.append(Monster(self,monster_x2,p.y,p,self.mon_health()))
         return monster
 
     def monster_detect_player(self,monster):
         if monster.detect_player() and monster.TICK % 30 == 0:
             m_bullet = MonsterBullet(self,monster.x,monster.y,monster)
             self.monster_bullet.append(m_bullet)
+    
+    def melee_attack(self):
+        for m in self.monster:
+            if m.x in range(self.player.player_right(), self.player.player_right() + MELEE_RANGE) and \
+                m.y in range(self.player.player_bot(), self.player.player_top()) and \
+                self.player.current_direction == DIR_RIGHT:
+                m.health = 0
+            elif m.x in range(self.player.player_left() - MELEE_RANGE, self.player.player_left()) and \
+                m.y in range(self.player.player_bot(), self.player.player_top()) and \
+                self.player.current_direction == DIR_LEFT:
+                m.health = 0
 
     def update(self,delta):
         self.player.update(delta)
@@ -406,6 +446,8 @@ class World:
         elif key == arcade.key.L:
             bullet = PlayerBullet(self, self.player.x, self.player.y)
             self.bullet.append(bullet)
+        elif key == arcade.key.K:
+            self.melee_attack()
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.A and self.player.direction == DIR_LEFT:
