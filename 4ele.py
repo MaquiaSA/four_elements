@@ -76,6 +76,13 @@ class FourElementsRunWindow(arcade.Window):
         arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 50,
                                             250,20,arcade.color.BLACK)
 
+    def power_bar(self):
+        arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
+                                            self.world.player.power * 2.5,
+                                            10,arcade.color.BLUE)
+        arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 70,
+                                            250,10,arcade.color.BLACK)
+
     def dead_screen(self):
         if self.world.player.is_dead:
             arcade.draw_rectangle_filled(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
@@ -92,6 +99,7 @@ class FourElementsRunWindow(arcade.Window):
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         self.hp_bar()
+        self.power_bar()
         arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
         self.dead_screen()
 
@@ -99,6 +107,7 @@ class FourElementsRunWindow(arcade.Window):
     def update(self, delta):
         self.player_sprite = self.player()
         self.hp_bar()
+        self.power_bar()
         self.world.update(delta)
         
     

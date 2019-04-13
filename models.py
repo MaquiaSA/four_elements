@@ -73,6 +73,7 @@ class Player(Model):
         self.health = HEALTH
         self.is_dead = False
         self.element = NORMAL
+        self.power = 0
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -162,6 +163,8 @@ class Player(Model):
         
         self.check_platform(platforms)
         self.check_dead()
+        if self.power >= 100:
+            self.power = 100
 
 
 class Bullet:
@@ -203,7 +206,11 @@ class PlayerBullet(Bullet):
         for m in self.world.monster:
             if self.hit(m):
                 m.health -= BULLET_DMG
+                if self.world.player.power < 100:
+                    self.world.player.power += 2
                 if m.health <= 0:
+                    if self.world.player.power < 100:
+                        self.world.player.power += 3
                     self.world.monster.remove(m)
                 if self in self.world.bullet:
                     self.world.bullet.remove(self)
