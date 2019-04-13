@@ -48,9 +48,11 @@ class FourElementsRunWindow(arcade.Window):
 
     def player(self):
         if self.world.player.current_direction == 2:
-            player_sprite = ModelSprite('images/player_left.png',model=self.world.player,scale=0.24)
+            player_sprite = ModelSprite('images/player-'+str(self.world.player.element)+'_left.png',
+                                        model=self.world.player,scale=0.24)
         else:
-            player_sprite = ModelSprite('images/player_right.png',model=self.world.player,scale=0.24)
+            player_sprite = ModelSprite('images/player-'+str(self.world.player.element)+'_right.png',
+                                        model=self.world.player,scale=0.24)
         return player_sprite
 
     def draw_platforms(self, platforms):
@@ -67,6 +69,13 @@ class FourElementsRunWindow(arcade.Window):
             else:
                 ModelSprite('images/dot.png',model=m).draw()
     
+    def hp_bar(self):
+        arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
+                                            self.world.player.health * 2.5,
+                                            20,arcade.color.RED)
+        arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 50,
+                                            250,20,arcade.color.BLACK)
+
     def dead_screen(self):
         if self.world.player.is_dead:
             arcade.draw_rectangle_filled(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
@@ -82,13 +91,14 @@ class FourElementsRunWindow(arcade.Window):
         self.draw_monster()
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
-        arcade.draw_text(str(self.world.player.health), 100, SCREEN_HEIGHT - 100, arcade.color.BLACK, 20)
+        self.hp_bar()
         arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
         self.dead_screen()
 
             
     def update(self, delta):
         self.player_sprite = self.player()
+        self.hp_bar()
         self.world.update(delta)
         
     
