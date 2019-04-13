@@ -41,6 +41,18 @@ DIR_OFFSET = {DIR_STILL: 0,
 MONSTER_DIR_OFFSET = {DIR_RIGHT: 1,
                       DIR_LEFT: -1}
 
+FIRE = 0
+WATER = 1
+EARTH = 2
+WIND = 3
+NORMAL = 4
+#                  vs     F    Wa  E    Wi  N
+ELEMENT_OFFSET = {FIRE:  (1, 0.75, 1, 1.25, 1),
+                  WATER: (0.75, 1, 1.25, 1, 1),
+                  EARTH: (1, 1.25, 1, 0.75, 1),
+                  WIND:  (1.25, 1, 0.75, 1, 1),
+                  NORMAL: (1, 1, 1, 1, 1)}
+
 GROUND_PLATFORM = 2
 
 class Model:
@@ -60,6 +72,7 @@ class Player(Model):
         self.count_jump = 0
         self.health = HEALTH
         self.is_dead = False
+        self.element = NORMAL
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -217,7 +230,7 @@ class MonsterBullet(Bullet):
         self.move()
         if self.hit():
             self.world.monster_bullet.remove(self)
-            self.world.player.health -= 5
+            self.world.player.health -= self.world.floor * ELEMENT_OFFSET[self.monster.element][self.world.player.element]
         if abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.monster_bullet.remove(self)
         if self.out_of_world() and self.world.monster_bullet != []:
@@ -255,6 +268,7 @@ class Monster(Model):
         self.current_direction = DIR_STILL
         self.update_tick = 60*choice([0.5,1,2])
         self.health = health
+        self.element = choice(list(ELEMENT_OFFSET))
     
     def random_direction(self):
         self.direction = choice(list(MONSTER_DIR_OFFSET))
@@ -417,10 +431,12 @@ class World:
             if m.x in range(self.player.player_right(), self.player.player_right() + MELEE_RANGE) and \
                 m.y in range(self.player.player_bot(), self.player.player_top()) and \
                 self.player.current_direction == DIR_RIGHT:
+                self.player.element = m.element
                 m.health = 0
             elif m.x in range(self.player.player_left() - MELEE_RANGE, self.player.player_left()) and \
                 m.y in range(self.player.player_bot(), self.player.player_top()) and \
                 self.player.current_direction == DIR_LEFT:
+                self.player.element = m.element
                 m.health = 0
 
     def update(self,delta):
