@@ -7,6 +7,7 @@ SCREEN_HEIGHT = 600
 PLATFORM_DRAW_THICKNESS = 10
 PLATFORM_DRAW_Y_OFFSET = 24
 
+
 class ModelSprite(arcade.Sprite):
     def __init__(self, *args, **kwargs):
         self.model = kwargs.pop('model', None)
@@ -41,9 +42,16 @@ class FourElementsRunWindow(arcade.Window):
         arcade.set_background_color(arcade.color.GRAY)
 
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
-        self.player_sprite = ModelSprite('images/player.png',model=self.world.player,scale=0.24)
+        self.player_sprite = self.player()
         self.bullet_sprite = BulletSprite(self.world.bullet)
         self.monster_bullet_sprite = BulletSprite(self.world.monster_bullet)
+
+    def player(self):
+        if self.world.player.current_direction == 2:
+            player_sprite = ModelSprite('images/player_left.png',model=self.world.player,scale=0.24)
+        else:
+            player_sprite = ModelSprite('images/player_right.png',model=self.world.player,scale=0.24)
+        return player_sprite
 
     def draw_platforms(self, platforms):
         for p in platforms:
@@ -52,16 +60,14 @@ class FourElementsRunWindow(arcade.Window):
                                          p.width, PLATFORM_DRAW_THICKNESS,
                                          arcade.color.WHITE)
     
-    def on_draw(self):
-        arcade.start_render()
-        self.player_sprite.draw()
-        self.draw_platforms(self.world.platforms)
+    def draw_monster(self):
         for m in self.world.monster:
-            ModelSprite('images/dot.png',model=m).draw()
-        self.bullet_sprite.draw()
-        self.monster_bullet_sprite.draw()
-        arcade.draw_text(str(self.world.player.health), 100, SCREEN_HEIGHT - 100, arcade.color.BLACK, 20)
-        arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+            if m.current_direction == -1:
+                ModelSprite('images/dot.png',model=m,mirrored=True).draw()
+            else:
+                ModelSprite('images/dot.png',model=m).draw()
+    
+    def dead_screen(self):
         if self.world.player.is_dead:
             arcade.draw_rectangle_filled(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
                                         SCREEN_WIDTH, SCREEN_HEIGHT, arcade.color.BLACK)
@@ -69,8 +75,20 @@ class FourElementsRunWindow(arcade.Window):
                          SCREEN_WIDTH // 2, SCREEN_HEIGHT/2 + 10, arcade.color.RED, 90, width=SCREEN_WIDTH, align="center",
                          anchor_x="center", anchor_y="center")
 
+    def on_draw(self):
+        arcade.start_render()
+        self.player_sprite.draw()
+        self.draw_platforms(self.world.platforms)
+        self.draw_monster()
+        self.bullet_sprite.draw()
+        self.monster_bullet_sprite.draw()
+        arcade.draw_text(str(self.world.player.health), 100, SCREEN_HEIGHT - 100, arcade.color.BLACK, 20)
+        arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+        self.dead_screen()
+
             
     def update(self, delta):
+        self.player_sprite = self.player()
         self.world.update(delta)
         
     
