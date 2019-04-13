@@ -62,12 +62,11 @@ class FourElementsRunWindow(arcade.Window):
                                          p.width, PLATFORM_DRAW_THICKNESS,
                                          arcade.color.WHITE)
     
-    def draw_monster(self):
-        for m in self.world.monster:
-            if m.current_direction == -1:
-                ModelSprite('images/dot.png',model=m,mirrored=True).draw()
-            else:
-                ModelSprite('images/dot.png',model=m).draw()
+    def monster_sprite(self,m):
+        if m.current_direction == -1:
+            ModelSprite('images/dot.png',model=m,mirrored=True).draw()
+        else:
+            ModelSprite('images/dot.png',model=m).draw()
     
     def hp_bar(self):
         arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
@@ -95,7 +94,8 @@ class FourElementsRunWindow(arcade.Window):
         arcade.start_render()
         self.player_sprite.draw()
         self.draw_platforms(self.world.platforms)
-        self.draw_monster()
+        for m in self.world.monster:
+            self.monster_sprite(m)
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         self.hp_bar()

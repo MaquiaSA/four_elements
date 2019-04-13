@@ -62,6 +62,12 @@ class Model:
         self.y = y
         self.vy = 0
         self.direction = DIR_STILL
+    
+    def check_dead(self):
+        if self.health <= 0:
+            self.is_dead = True
+        else:
+            self.is_dead = False
 
 class Player(Model):
     def __init__(self,world,x,y):
@@ -84,12 +90,6 @@ class Player(Model):
             self.is_jump = True
             self.vy = JUMP_VY
             self.count_jump += 1
-    
-    def check_dead(self):
-        if self.health <= 0:
-            self.is_dead = True
-        else:
-            self.is_dead = False
         
     def player_left(self):
         return self.x - PLAYER_RADIUS
@@ -205,7 +205,7 @@ class PlayerBullet(Bullet):
                 self.world.bullet.remove(self)
         for m in self.world.monster:
             if self.hit(m):
-                m.health -= BULLET_DMG
+                m.health -= BULLET_DMG * ELEMENT_OFFSET[self.world.player.element][m.element]
                 if self.world.player.power < 100:
                     self.world.player.power += 2
                 if m.health <= 0:
@@ -276,9 +276,15 @@ class Monster(Model):
         self.update_tick = 60*choice([0.5,1,2])
         self.health = health
         self.element = choice(list(ELEMENT_OFFSET))
+        self.is_dead = False
     
     def random_direction(self):
         self.direction = choice(list(MONSTER_DIR_OFFSET))
+    
+    def dead(self):
+        if self.health <= 0:
+            self.is_dead = True
+        
     
     def move(self):
         if self.direction != DIR_STILL:
@@ -341,9 +347,9 @@ class Monster(Model):
         if self.direction is None:
             self.random_direction()
         self.move()
-        # self.monster_boarder()
-        # self.random_moving()
-        # self.detect_player()
+        self.check_dead()
+        if self.is_dead:
+            self.world.monster.remove(self)
 
 
 class World:
