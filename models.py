@@ -29,6 +29,7 @@ BULLET_VX = 20
 BULLET_RADIUS = 32
 BULLET_RANGE = 300
 BULLET_DMG = 60
+RANGE_START = 30
 
 DIR_STILL = 0
 DIR_RIGHT = 1
@@ -183,6 +184,7 @@ class Bullet:
 class PlayerBullet(Bullet):
     def __init__(self,world,x,y):
         super().__init__(world,x,y)
+        self.element = self.world.player.element
     
     def move(self):
         prev_direction = self.world.player.current_direction
@@ -219,6 +221,7 @@ class MonsterBullet(Bullet):
     def __init__(self,world,x,y,monster):
         super().__init__(world,x,y)
         self.monster = monster
+        self.element = monster.element
     
     def move(self):
         prev_direction = self.monster.current_direction
@@ -436,7 +439,7 @@ class World:
 
     def monster_detect_player(self,monster):
         if monster.detect_player() and monster.TICK % 30 == 0:
-            m_bullet = MonsterBullet(self,monster.x,monster.y,monster)
+            m_bullet = MonsterBullet(self,monster.x + (RANGE_START * DIR_OFFSET[monster.current_direction]),monster.y,monster)
             self.monster_bullet.append(m_bullet)
     
     def melee_attack(self):
@@ -473,7 +476,7 @@ class World:
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
         elif key == arcade.key.L:
-            bullet = PlayerBullet(self, self.player.x, self.player.y)
+            bullet = PlayerBullet(self, self.player.x + (RANGE_START * DIR_OFFSET[self.player.current_direction]), self.player.y)
             self.bullet.append(bullet)
         elif key == arcade.key.K:
             self.melee_attack()

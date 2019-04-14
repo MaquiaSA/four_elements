@@ -5,7 +5,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
 PLATFORM_DRAW_THICKNESS = 10
-PLATFORM_DRAW_Y_OFFSET = 24
+PLATFORM_DRAW_Y_OFFSET = 28
 
 
 class ModelSprite(arcade.Sprite):
@@ -25,10 +25,13 @@ class ModelSprite(arcade.Sprite):
 class BulletSprite:
     def __init__(self, bullet):
         self.bullet = bullet
-        self.bullet_sprite = arcade.Sprite('images/coin.png')
 
     def draw(self):
         for b in self.bullet:
+            if b.direction == 2:
+                self.bullet_sprite = arcade.Sprite('images/bullet-'+str(b.element)+'_left.png',scale=0.5)
+            else:
+                self.bullet_sprite = arcade.Sprite('images/bullet-'+str(b.element)+'_right.png',scale=0.5)
             self.bullet_sprite.set_position(b.x,b.y)
             self.bullet_sprite.draw()
 
@@ -57,10 +60,10 @@ class FourElementsRunWindow(arcade.Window):
 
     def draw_platforms(self, platforms):
         for p in platforms:
-            arcade.draw_rectangle_filled(p.x + (p.width//2),
-                                         p.y - PLATFORM_DRAW_Y_OFFSET,
-                                         p.width, PLATFORM_DRAW_THICKNESS,
-                                         arcade.color.WHITE)
+            arcade.draw_xywh_rectangle_filled(p.x,
+                                            p.y-PLATFORM_DRAW_Y_OFFSET,
+                                            p.width, PLATFORM_DRAW_THICKNESS,
+                                            arcade.color.WHITE)
     
     def monster_sprite(self,m):
         if m.current_direction == 2:
@@ -93,12 +96,12 @@ class FourElementsRunWindow(arcade.Window):
 
     def on_draw(self):
         arcade.start_render()
+        self.bullet_sprite.draw()
+        self.monster_bullet_sprite.draw()
         self.player_sprite.draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
         self.draw_platforms(self.world.platforms)
-        self.bullet_sprite.draw()
-        self.monster_bullet_sprite.draw()
         self.hp_bar()
         self.power_bar()
         arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
