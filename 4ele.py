@@ -7,6 +7,8 @@ SCREEN_HEIGHT = 600
 PLATFORM_DRAW_THICKNESS = 10
 PLATFORM_DRAW_Y_OFFSET = 28
 
+MELEE_UPDATE = 3
+
 
 class ModelSprite(arcade.Sprite):
     def __init__(self, *args, **kwargs):
@@ -29,9 +31,9 @@ class BulletSprite:
     def draw(self):
         for b in self.bullet:
             if b.direction == 2:
-                self.bullet_sprite = arcade.Sprite('images/bullet-'+str(b.element)+'_left.png',scale=0.5)
+                self.bullet_sprite = arcade.Sprite('images/bullet/bullet-'+str(b.element)+'_left.png',scale=0.5)
             else:
-                self.bullet_sprite = arcade.Sprite('images/bullet-'+str(b.element)+'_right.png',scale=0.5)
+                self.bullet_sprite = arcade.Sprite('images/bullet/bullet-'+str(b.element)+'_right.png',scale=0.5)
             self.bullet_sprite.set_position(b.x,b.y)
             self.bullet_sprite.draw()
 
@@ -51,12 +53,31 @@ class FourElementsRunWindow(arcade.Window):
 
     def player(self):
         if self.world.player.current_direction == 2:
-            player_sprite = ModelSprite('images/player-'+str(self.world.player.element)+'_left.png',
+            player_sprite = ModelSprite('images/player/player-'+str(self.world.player.element)+'_left.png',
                                         model=self.world.player,scale=0.24)
         else:
-            player_sprite = ModelSprite('images/player-'+str(self.world.player.element)+'_right.png',
+            player_sprite = ModelSprite('images//player/player-'+str(self.world.player.element)+'_right.png',
                                         model=self.world.player,scale=0.24)
         return player_sprite
+
+    def draw_melee(self):
+        melee_sprite = ModelSprite('images/melee/melee.png',model=self.world.player,scale=0.24)
+        if 0 <= self.world.player_melee.frame <= MELEE_UPDATE:
+            if self.world.player.current_direction == 2:
+                melee_sprite = ModelSprite('images/melee/left/melee-0'+\
+                    # str(self.world.player.element)+\
+                        str(self.world.player_melee.melee_update)+'.png',
+                    model=self.world.player,scale=0.24)
+            else:
+                melee_sprite = ModelSprite('images/melee/right/melee-0'+\
+                    # str(self.world.player.element)+\
+                        str(self.world.player_melee.melee_update)+'.png',
+                    model=self.world.player,scale=0.24)
+        
+        return melee_sprite
+        
+
+
 
     def draw_platforms(self, platforms):
         for p in platforms:
@@ -67,9 +88,9 @@ class FourElementsRunWindow(arcade.Window):
     
     def monster_sprite(self,m):
         if m.current_direction == 2:
-            monster_sprite = ModelSprite('images/monster-'+str(m.element)+'_left.png',model=m,scale=0.35)
+            monster_sprite = ModelSprite('images/monster/monster-'+str(m.element)+'_left.png',model=m,scale=0.35)
         else:
-            monster_sprite = ModelSprite('images/monster-'+str(m.element)+'_right.png',model=m,scale=0.35)
+            monster_sprite = ModelSprite('images/monster/monster-'+str(m.element)+'_right.png',model=m,scale=0.35)
         return monster_sprite
     
     def hp_bar(self):
@@ -99,6 +120,7 @@ class FourElementsRunWindow(arcade.Window):
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         self.player_sprite.draw()
+        self.draw_melee().draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
         self.draw_platforms(self.world.platforms)
@@ -106,10 +128,11 @@ class FourElementsRunWindow(arcade.Window):
         self.power_bar()
         arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
         self.dead_screen()
-
             
     def update(self, delta):
+        # self.set_update_rate(1/2)
         self.player_sprite = self.player()
+        self.draw_melee().draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
         self.hp_bar()
