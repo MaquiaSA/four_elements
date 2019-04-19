@@ -106,6 +106,9 @@ class FourElementsRunWindow(arcade.Window):
                                             10,arcade.color.BLUE)
         arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 70,
                                             250,10,arcade.color.BLACK)
+    
+    def floor(self):
+        arcade.draw_text("Floor: "+str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
 
     def dead_screen(self):
         if self.world.player.is_dead:
@@ -126,7 +129,7 @@ class FourElementsRunWindow(arcade.Window):
         self.draw_platforms(self.world.platforms)
         self.hp_bar()
         self.power_bar()
-        arcade.draw_text(str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+        self.floor()
         self.dead_screen()
             
     def update(self, delta):
