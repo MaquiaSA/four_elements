@@ -465,7 +465,7 @@ class World:
         return monster
 
     def monster_detect_player(self,monster):
-        if monster.detect_player() and monster.TICK % 30 == 0:
+        if monster.detect_player() and monster.TICK % (64-(4*self.floor)) == 0:
             m_bullet = MonsterBullet(self,
                 monster.x + (RANGE_START * DIR_OFFSET[monster.current_direction]),
                 monster.y,

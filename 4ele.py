@@ -64,13 +64,13 @@ class FourElementsRunWindow(arcade.Window):
         melee_sprite = ModelSprite('images/melee/melee.png',model=self.world.player,scale=0.24)
         if 0 <= self.world.player_melee.frame <= MELEE_UPDATE:
             if self.world.player.current_direction == 2:
-                melee_sprite = ModelSprite('images/melee/left/melee-0'+\
-                    # str(self.world.player.element)+\
+                melee_sprite = ModelSprite('images/melee/left/melee-'+\
+                    str(self.world.player.element)+\
                         str(self.world.player_melee.melee_update)+'.png',
                     model=self.world.player,scale=0.24)
             else:
-                melee_sprite = ModelSprite('images/melee/right/melee-0'+\
-                    # str(self.world.player.element)+\
+                melee_sprite = ModelSprite('images/melee/right/melee-'+\
+                    str(self.world.player.element)+\
                         str(self.world.player_melee.melee_update)+'.png',
                     model=self.world.player,scale=0.24)
         
