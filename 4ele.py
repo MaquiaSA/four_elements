@@ -131,13 +131,17 @@ class FourElementsRunWindow(arcade.Window):
                                             250,10,arcade.color.BLACK)
     
     def floor(self):
-        arcade.draw_text("Floor: "+str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+        arcade.draw_text("Floor: "+str(self.world.floor),75,SCREEN_HEIGHT - 100, arcade.color.BLACK, 14)
+    
+    def score(self):
+        arcade.draw_text("Score: "+str(self.world.score),75,SCREEN_HEIGHT - 120, arcade.color.BLACK, 14)
 
     def gui(self):
         # self.draw_shield()
         self.hp_bar()
         self.power_bar()
         self.floor()
+        self.score()
 
     def dead_screen(self):
         if self.world.player.is_dead:

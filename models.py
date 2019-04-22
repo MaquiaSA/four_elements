@@ -32,6 +32,12 @@ BULLET_RANGE = 300
 BULLET_DMG = 60
 RANGE_START = 30
 
+SCORE_WIN = 1500
+SCORE_DRAW = 1000
+SCORE_LOSE = 750
+SCORE_MELEE = 1000
+
+
 DIR_STILL = 0
 DIR_RIGHT = 1
 DIR_LEFT = 2
@@ -95,7 +101,7 @@ class Player(Model):
         self.element = NORMAL
         self.melee_frame = 0
 
-        self.power = 90
+        self.power = 0
         self.dmg_reduce = 1
         self.shield = False
 
@@ -240,6 +246,14 @@ class PlayerBullet(Bullet):
         if self.world.player.power < 100:
             self.world.player.power += power
 
+    def increase_world_score(self, m):
+        dmg_modifier = ELEMENT_OFFSET[self.world.player.element][m.element]
+        if dmg_modifier == 1.25:
+            self.world.score += SCORE_WIN
+        elif dmg_modifier == 1.00:
+            self.world.score += SCORE_DRAW
+        elif dmg_modifier == 0.75:
+            self.world.score += SCORE_LOSE
 
     def update(self,delta):
         self.move()
@@ -258,6 +272,7 @@ class PlayerBullet(Bullet):
                         self.increase_power(3)
                 if m.health <= 0:
                     self.world.monster.remove(m)
+                    self.increase_world_score(m)
                 if self in self.world.bullet:
                     self.world.bullet.remove(self)
 
@@ -443,6 +458,7 @@ class World:
         self.monster_bullet = []
         self.monster_health = 100
         self.floor = 0
+        self.score = 0
         self.setup()
     
     def setup(self):
@@ -534,11 +550,13 @@ class World:
                 self.player.current_direction == DIR_RIGHT:
                 self.player.element = m.element
                 m.health = 0
+                self.score += SCORE_MELEE
             elif m.x in range(self.player.player_left() - MELEE_RANGE, self.player.player_right()) and \
                 m.y in range(self.player.player_bot(), self.player.player_top()) and \
                 self.player.current_direction == DIR_LEFT:
                 self.player.element = m.element
                 m.health = 0
+                self.score += SCORE_MELEE
 
     def update(self,delta):
         self.player.update(delta)
