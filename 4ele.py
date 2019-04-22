@@ -101,6 +101,16 @@ class FourElementsRunWindow(arcade.Window):
             direction = 'right'
         return ModelSprite('images/monster/monster-hit_'+ direction +'.png',model=m,scale=0.35)
     
+    def draw_shield(self):
+        if self.world.player.shield:
+            arcade.draw_xywh_rectangle_filled(20, SCREEN_HEIGHT - 50,
+                                            50,
+                                            50,arcade.color.GREEN)
+        else:
+            arcade.draw_xywh_rectangle_filled(20, SCREEN_HEIGHT - 50,
+                                            50,
+                                            50,arcade.color.YELLOW)
+    
     def hp_bar(self):
         arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
                                             self.world.player.health * 2.5,
@@ -109,14 +119,25 @@ class FourElementsRunWindow(arcade.Window):
                                             250,20,arcade.color.BLACK)
 
     def power_bar(self):
-        arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
-                                            self.world.player.power * 2.5,
-                                            10,arcade.color.BLUE)
+        if self.world.player.power == 100 or self.world.player.shield:
+            arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
+                                                self.world.player.power * 2.5,
+                                                10,arcade.color.HARLEQUIN)
+        else:
+            arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
+                                                self.world.player.power * 2.5,
+                                                10,arcade.color.BLUE)
         arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 70,
                                             250,10,arcade.color.BLACK)
     
     def floor(self):
         arcade.draw_text("Floor: "+str(self.world.floor),100,SCREEN_HEIGHT - 130, arcade.color.BLACK, 20)
+
+    def gui(self):
+        # self.draw_shield()
+        self.hp_bar()
+        self.power_bar()
+        self.floor()
 
     def dead_screen(self):
         if self.world.player.is_dead:
@@ -139,9 +160,7 @@ class FourElementsRunWindow(arcade.Window):
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
         self.draw_platforms(self.world.platforms)
-        self.hp_bar()
-        self.power_bar()
-        self.floor()
+        self.gui()
         self.dead_screen()
             
     def update(self, delta):
@@ -153,8 +172,7 @@ class FourElementsRunWindow(arcade.Window):
             self.monster_sprite(m).draw()
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
-        self.hp_bar()
-        self.power_bar()
+        self.gui()
         self.world.update(delta)
         
     

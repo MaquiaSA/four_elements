@@ -8,7 +8,7 @@ PLATFORM_THICKNESS = 30
 GROUND_THICKNESS = 100
 MAP_GRID = 50
 
-PLAYER_RADIUS = 10
+PLAYER_RADIUS = 15
 GRAVITY = -1
 MIN_VY = -20
 JUMP_VY = 15
@@ -48,12 +48,20 @@ WATER = 1
 EARTH = 2
 WIND = 3
 NORMAL = 4
-#               dmg vs ->   F     Wa     E    Wi     N
-ELEMENT_OFFSET = {FIRE:   (1.00, 0.75, 1.00, 1.25, 1.00),
+#               dmg vs ->   Fi    Wa    Ea    Wi    N
+ELEMENT_OFFSET = {FIRE:   (1.00, 0.75, 1.00, 1.25, 1.00), #    FIRE>WIND>EARTH>WATER>FIRE
                   WATER:  (0.75, 1.00, 1.25, 1.00, 1.00),
                   EARTH:  (1.00, 1.25, 1.00, 0.75, 1.00),
                   WIND:   (1.25, 1.00, 0.75, 1.00, 1.00),
                   NORMAL: (1.00, 1.00, 1.00, 1.00, 1.00)}
+
+SHIELD_OFFSET = {FIRE:   (0.5, 0.8, 0.5, 0.0, 0.5),
+                 WATER:  (0.0, 0.5, 0.8, 0.5, 0.5),
+                 EARTH:  (0.5, 0.0, 0.5, 0.8, 0.5),
+                 WIND:   (0.8, 0.5, 0.0, 0.5, 0.5),
+                 NORMAL: (0.5, 0.5, 0.5, 0.5, 0.5)}
+
+M_ELEMENT_LIST = [FIRE, WATER, EARTH, WIND]
 
 GROUND_PLATFORM = 2
 
@@ -77,14 +85,21 @@ class Player(Model):
         super().__init__(world,x,y)
         self.vx = PLAYER_VX
         self.current_direction = DIR_RIGHT
-        self.is_jump = False
+
         self.count_jump = 0
+        self.is_jump = False
+
         self.health = HEALTH
         self.prev_health = HEALTH
-        self.is_dead = False
+        
         self.element = NORMAL
-        self.power = 0
         self.melee_frame = 0
+
+        self.power = 90
+        self.dmg_reduce = 1
+        self.shield = False
+
+        self.is_dead = False
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -142,7 +157,7 @@ class Player(Model):
         return False
     
     def check_out_of_world(self):
-        if self.x <= PLAYER_RADIUS or self.x - PLAYER_RADIUS >= self.world.width:
+        if self.player_left() <= 0 or self.player_right() >= self.world.width:
             self.direction = DIR_STILL
             if self.player_left() <= 0:
                 self.x = PLAYER_RADIUS
@@ -164,6 +179,17 @@ class Player(Model):
             self.prev_health = self.health
         else:
             self.is_hit = False
+    
+    def check_shield(self):
+        if self.power >= 100:
+            self.power = 100
+        # if self.power == 100 or self.shield:
+        #     self.shield = True
+        if self.power <= 0:
+            self.shield = False
+            self.power = 0
+        if self.shield:
+            self.power -= 0.2
 
 
     def update(self,delta):
@@ -176,9 +202,8 @@ class Player(Model):
         
         self.check_platform(platforms)
         self.check_is_hit()
+        self.check_shield()
         self.check_dead()
-        if self.power >= 100:
-            self.power = 100
 
 
 class Bullet:
@@ -210,6 +235,11 @@ class PlayerBullet(Bullet):
         if self.y - BULLET_RADIUS <= monster.y <= self.y + BULLET_RADIUS and \
             self.x - BULLET_RADIUS <= monster.x <= self.x + BULLET_RADIUS:
             return True
+    
+    def increase_power(self, power):
+        if self.world.player.power < 100:
+            self.world.player.power += power
+
 
     def update(self,delta):
         self.move()
@@ -222,11 +252,11 @@ class PlayerBullet(Bullet):
         for m in self.world.monster:
             if self.hit(m):
                 m.health -= BULLET_DMG * ELEMENT_OFFSET[self.world.player.element][m.element]
-                if self.world.player.power < 100:
-                    self.world.player.power += 2
+                if not self.world.player.shield:
+                    self.increase_power(2)
+                    if m.health <= 0:
+                        self.increase_power(3)
                 if m.health <= 0:
-                    if self.world.player.power < 100:
-                        self.world.player.power += 3
                     self.world.monster.remove(m)
                 if self in self.world.bullet:
                     self.world.bullet.remove(self)
@@ -254,8 +284,14 @@ class MonsterBullet(Bullet):
         self.move()
         if self.hit():
             self.world.monster_bullet.remove(self)
+            if self.world.player.shield:
+                self.world.player.dmg_reduce = SHIELD_OFFSET[self.world.player.element][self.element]
+            else:
+                self.world.player.dmg_reduce = 1
             self.world.player.health -= \
-                self.world.floor * ELEMENT_OFFSET[self.monster.element][self.world.player.element]
+                self.world.floor *\
+                    ELEMENT_OFFSET[self.monster.element][self.world.player.element] *\
+                    self.world.player.dmg_reduce
         if abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.monster_bullet.remove(self)
         if self.out_of_world() and self.world.monster_bullet != []:
@@ -314,7 +350,7 @@ class Monster(Model):
         self.update_tick = 60*choice([0.5,1,2])
         self.health = health
         self.prev_health = health
-        self.element = choice(list(ELEMENT_OFFSET))
+        self.element = choice(M_ELEMENT_LIST)
     
     def random_direction(self):
         self.direction = choice(list(MONSTER_DIR_OFFSET))
@@ -493,12 +529,12 @@ class World:
     def melee_attack(self):
         self.player.melee_frame = 0
         for m in self.monster:
-            if m.x in range(self.player.x, self.player.player_right() + MELEE_RANGE) and \
+            if m.x in range(self.player.player_left(), self.player.player_right() + MELEE_RANGE) and \
                 m.y in range(self.player.player_bot(), self.player.player_top()) and \
                 self.player.current_direction == DIR_RIGHT:
                 self.player.element = m.element
                 m.health = 0
-            elif m.x in range(self.player.player_left() - MELEE_RANGE, self.player.x) and \
+            elif m.x in range(self.player.player_left() - MELEE_RANGE, self.player.player_right()) and \
                 m.y in range(self.player.player_bot(), self.player.player_top()) and \
                 self.player.current_direction == DIR_LEFT:
                 self.player.element = m.element
@@ -531,9 +567,10 @@ class World:
                 self.player.y)
             self.bullet.append(bullet)
         elif key == arcade.key.K:
-            # if not self.player_melee.melee_update < 3:
             self.player_melee.frame = 0
             self.melee_attack()
+        elif key == arcade.key.J and self.player.power == 100:
+            self.player.shield = True
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.A and self.player.direction == DIR_LEFT:
