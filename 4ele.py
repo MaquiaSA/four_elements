@@ -64,19 +64,20 @@ class FourElementsRunWindow(arcade.Window):
         melee_sprite = ModelSprite('images/melee/melee.png',model=self.world.player,scale=0.24)
         if 0 <= self.world.player_melee.frame <= MELEE_UPDATE:
             if self.world.player.current_direction == 2:
-                melee_sprite = ModelSprite('images/melee/left/melee-'+\
-                    str(self.world.player.element)+\
-                        str(self.world.player_melee.melee_update)+'.png',
-                    model=self.world.player,scale=0.24)
+                direction = 'left'
             else:
-                melee_sprite = ModelSprite('images/melee/right/melee-'+\
-                    str(self.world.player.element)+\
-                        str(self.world.player_melee.melee_update)+'.png',
+                direction = 'right'
+            melee_sprite = ModelSprite('images/melee/'+ direction +'/melee-'+\
+                    str(self.world.player.element) + str(self.world.player_melee.melee_update)+'.png',
                     model=self.world.player,scale=0.24)
-        
         return melee_sprite
         
-
+    def player_sprite_hit(self):
+        if self.world.player.current_direction == 2:
+            direction = 'left'
+        else:
+            direction = 'right'
+        return ModelSprite('images/player/player-hit_'+ direction +'.png',model=self.world.player,scale=0.24)
 
 
     def draw_platforms(self, platforms):
@@ -92,6 +93,13 @@ class FourElementsRunWindow(arcade.Window):
         else:
             monster_sprite = ModelSprite('images/monster/monster-'+str(m.element)+'_right.png',model=m,scale=0.35)
         return monster_sprite
+    
+    def monster_sprite_hit(self,m):
+        if m.current_direction == 2:
+            direction = 'left'
+        else:
+            direction = 'right'
+        return ModelSprite('images/monster/monster-hit_'+ direction +'.png',model=m,scale=0.35)
     
     def hp_bar(self):
         arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
@@ -123,9 +131,13 @@ class FourElementsRunWindow(arcade.Window):
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         self.player_sprite.draw()
+        if self.world.player.is_hit:
+            self.player_sprite_hit().draw()
         self.draw_melee().draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
+            if m.is_hit:
+                self.monster_sprite_hit(m).draw()
         self.draw_platforms(self.world.platforms)
         self.hp_bar()
         self.power_bar()
@@ -135,9 +147,12 @@ class FourElementsRunWindow(arcade.Window):
     def update(self, delta):
         # self.set_update_rate(1/2)
         self.player_sprite = self.player()
+        self.player_sprite_hit().draw()
         self.draw_melee().draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
+            if m.is_hit:
+                self.monster_sprite_hit(m).draw()
         self.hp_bar()
         self.power_bar()
         self.world.update(delta)

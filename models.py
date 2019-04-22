@@ -64,6 +64,7 @@ class Model:
         self.y = y
         self.vy = 0
         self.direction = DIR_STILL
+        self.is_hit = False
     
     def check_dead(self):
         if self.health <= 0:
@@ -79,6 +80,7 @@ class Player(Model):
         self.is_jump = False
         self.count_jump = 0
         self.health = HEALTH
+        self.prev_health = HEALTH
         self.is_dead = False
         self.element = NORMAL
         self.power = 0
@@ -155,6 +157,14 @@ class Player(Model):
             self.vy += GRAVITY
         if self.vy < MIN_VY:
             self.vy = MIN_VY
+    
+    def check_is_hit(self):
+        if self.prev_health != self.health:
+            self.is_hit = True
+            self.prev_health = self.health
+        else:
+            self.is_hit = False
+
 
     def update(self,delta):
         self.x += DIR_OFFSET[self.direction] * self.vx
@@ -165,6 +175,7 @@ class Player(Model):
         self.check_floating(platforms)
         
         self.check_platform(platforms)
+        self.check_is_hit()
         self.check_dead()
         if self.power >= 100:
             self.power = 100
@@ -302,8 +313,8 @@ class Monster(Model):
         self.current_direction = DIR_STILL
         self.update_tick = 60*choice([0.5,1,2])
         self.health = health
+        self.prev_health = health
         self.element = choice(list(ELEMENT_OFFSET))
-        self.is_dead = False
     
     def random_direction(self):
         self.direction = choice(list(MONSTER_DIR_OFFSET))
@@ -312,7 +323,13 @@ class Monster(Model):
         if self.health <= 0:
             self.is_dead = True
         
-    
+    def check_is_hit(self):
+        if self.health != self.prev_health:
+            self.is_hit = True
+            self.prev_health = self.health
+        else:
+            self.is_hit = False
+
     def move(self):
         if self.direction != DIR_STILL:
             self.current_direction = self.direction
@@ -374,6 +391,7 @@ class Monster(Model):
         if self.direction is None:
             self.random_direction()
         self.move()
+        self.check_is_hit()
         self.check_dead()
         if self.is_dead:
             self.world.monster.remove(self)
