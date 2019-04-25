@@ -5,7 +5,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
 PLATFORM_DRAW_THICKNESS = 10
-PLATFORM_DRAW_Y_OFFSET = 28
+PLATFORM_DRAW_Y_OFFSET = 30
 
 MELEE_UPDATE = 3
 
@@ -82,10 +82,10 @@ class FourElementsRunWindow(arcade.Window):
 
     def draw_platforms(self, platforms):
         for p in platforms:
-            arcade.draw_xywh_rectangle_filled(p.x,
+            arcade.draw_xywh_rectangle_textured(p.x,
                                             p.y-PLATFORM_DRAW_Y_OFFSET,
                                             p.width, PLATFORM_DRAW_THICKNESS,
-                                            arcade.color.WHITE)
+                                            texture=arcade.load_texture('images/platform.png'))
     
     def monster_sprite(self,m):
         if m.current_direction == 2:
