@@ -79,6 +79,7 @@ class Model:
         self.vy = 0
         self.direction = DIR_STILL
         self.is_hit = False
+        self.health = None
     
     def check_dead(self):
         if self.health <= 0:
@@ -101,7 +102,7 @@ class Player(Model):
         self.element = NORMAL
         self.melee_frame = 0
 
-        self.power = 0
+        self.power = 90
         self.dmg_reduce = 1
         self.shield = False
 
@@ -180,7 +181,7 @@ class Player(Model):
             self.vy = MIN_VY
     
     def check_is_hit(self):
-        if self.prev_health != self.health:
+        if self.prev_health < self.health:
             self.is_hit = True
             self.prev_health = self.health
         else:
@@ -195,8 +196,11 @@ class Player(Model):
             self.shield = False
             self.power = 0
         if self.shield:
-            self.power -= 0.2
-
+            self.power -= 0.2 * self.world.floor
+            if self.health <= 100:
+                self.health += 0.1 / self.world.floor
+            else:
+                self.health = 100
 
     def update(self,delta):
         self.x += DIR_OFFSET[self.direction] * self.vx

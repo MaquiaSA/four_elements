@@ -153,6 +153,9 @@ class FourElementsRunWindow(arcade.Window):
 
     def on_draw(self):
         arcade.start_render()
+        arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                                        SCREEN_WIDTH, SCREEN_HEIGHT,
+                                        texture=arcade.load_texture('images/background.png'))
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
         self.player_sprite.draw()
@@ -168,7 +171,6 @@ class FourElementsRunWindow(arcade.Window):
         self.dead_screen()
             
     def update(self, delta):
-        # self.set_update_rate(1/2)
         self.player_sprite = self.player()
         self.player_sprite_hit().draw()
         self.draw_melee().draw()
