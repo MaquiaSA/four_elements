@@ -4,11 +4,16 @@ from models import World
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
+PLATFORM_THICKNESS = 30
+GROUND_THICKNESS = 100
 PLATFORM_DRAW_THICKNESS = 10
 PLATFORM_DRAW_Y_OFFSET = 30
 
-MELEE_UPDATE = 3
+MELEE_FRAME_UPDATE = 3
 
+DIR_STILL = 0
+DIR_RIGHT = 1
+DIR_LEFT = 2
 
 class ModelSprite(arcade.Sprite):
     def __init__(self, *args, **kwargs):
@@ -30,7 +35,7 @@ class BulletSprite:
 
     def draw(self):
         for b in self.bullet:
-            if b.direction == 2:
+            if b.direction == DIR_LEFT:
                 self.bullet_sprite = arcade.Sprite('images/bullet/bullet-'+str(b.element)+'_left.png',scale=0.5)
             else:
                 self.bullet_sprite = arcade.Sprite('images/bullet/bullet-'+str(b.element)+'_right.png',scale=0.5)
@@ -51,8 +56,13 @@ class FourElementsRunWindow(arcade.Window):
         self.bullet_sprite = BulletSprite(self.world.bullet)
         self.monster_bullet_sprite = BulletSprite(self.world.monster_bullet)
 
+    def background(self):
+        arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                                        SCREEN_WIDTH, SCREEN_HEIGHT,
+                                        texture=arcade.load_texture('images/background.png'))
+
     def player(self):
-        if self.world.player.current_direction == 2:
+        if self.world.player.current_direction == DIR_LEFT:
             player_sprite = ModelSprite('images/player/player-'+str(self.world.player.element)+'_left.png',
                                         model=self.world.player,scale=0.24)
         else:
@@ -62,8 +72,8 @@ class FourElementsRunWindow(arcade.Window):
 
     def draw_melee(self):
         melee_sprite = ModelSprite('images/melee/melee.png',model=self.world.player,scale=0.24)
-        if 0 <= self.world.player_melee.frame <= MELEE_UPDATE:
-            if self.world.player.current_direction == 2:
+        if 0 <= self.world.player_melee.frame <= MELEE_FRAME_UPDATE:
+            if self.world.player.current_direction == DIR_LEFT:
                 direction = 'left'
             else:
                 direction = 'right'
@@ -73,7 +83,7 @@ class FourElementsRunWindow(arcade.Window):
         return melee_sprite
         
     def player_sprite_hit(self):
-        if self.world.player.current_direction == 2:
+        if self.world.player.current_direction == DIR_LEFT:
             direction = 'left'
         else:
             direction = 'right'
@@ -88,14 +98,14 @@ class FourElementsRunWindow(arcade.Window):
                                             texture=arcade.load_texture('images/platform.png'))
     
     def monster_sprite(self,m):
-        if m.current_direction == 2:
+        if m.current_direction == DIR_LEFT:
             monster_sprite = ModelSprite('images/monster/monster-'+str(m.element)+'_left.png',model=m,scale=0.35)
         else:
             monster_sprite = ModelSprite('images/monster/monster-'+str(m.element)+'_right.png',model=m,scale=0.35)
         return monster_sprite
     
     def monster_sprite_hit(self,m):
-        if m.current_direction == 2:
+        if m.current_direction == DIR_LEFT:
             direction = 'left'
         else:
             direction = 'right'
@@ -112,34 +122,64 @@ class FourElementsRunWindow(arcade.Window):
                                             50,arcade.color.YELLOW)
     
     def hp_bar(self):
-        arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
-                                            self.world.player.health * 2.5,
-                                            20,arcade.color.RED)
-        arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 50,
-                                            250,20,arcade.color.BLACK)
+        if self.world.player.health >= (1000/11):
+            arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-25],
+                                            [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-25],
+                                            [75+(self.world.player.health)*2.75,
+                                                SCREEN_HEIGHT-(25+(275-(self.world.player.health)*2.75))],
+                                            [325,SCREEN_HEIGHT-50],
+                                            [75,SCREEN_HEIGHT-50]],arcade.color.RED)
+        else:
+            arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-25],
+                                            [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-25],
+                                            [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-50],
+                                            [75,SCREEN_HEIGHT-50]],arcade.color.RED)
+
+        # arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
+        #                                     self.world.player.health * 2.5,
+        #                                     20,arcade.color.RED)
 
     def power_bar(self):
+        color = arcade.color.BLUE
         if self.world.player.power == 100 or self.world.player.shield:
-            arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
-                                                self.world.player.power * 2.5,
-                                                10,arcade.color.HARLEQUIN)
+            color = arcade.color.HARLEQUIN
         else:
-            arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 70,
-                                                self.world.player.power * 2.5,
-                                                10,arcade.color.BLUE)
-        arcade.draw_xywh_rectangle_outline(75, SCREEN_HEIGHT - 70,
-                                            250,10,arcade.color.BLACK)
+            color = arcade.color.BLUE
+        if self.world.player.power >= (4700/49):
+            arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-55],
+                                            [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-55],
+                                            [75+(self.world.player.power)*2.45,
+                                                SCREEN_HEIGHT-(55+(245-(self.world.player.power)*2.45))],
+                                            [305,SCREEN_HEIGHT-65],
+                                            [75,SCREEN_HEIGHT-65]],color)
+        else:
+            arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-55],
+                                            [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-55],
+                                            [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-65],
+                                            [75,SCREEN_HEIGHT-65]],color)
+    
+    def bar_outline(self):
+        arcade.draw_polygon_outline([[75,SCREEN_HEIGHT-25],
+                                     [350,SCREEN_HEIGHT-25],
+                                     [325,SCREEN_HEIGHT-50],
+                                     [75,SCREEN_HEIGHT-50]],arcade.color.BLACK,border_width=2)
+        arcade.draw_polygon_outline([[75,SCREEN_HEIGHT-55],
+                                     [320,SCREEN_HEIGHT-55],
+                                     [310,SCREEN_HEIGHT-65],
+                                     [75,SCREEN_HEIGHT-65]],arcade.color.BLACK,border_width=2)
     
     def floor(self):
-        arcade.draw_text("Floor: "+str(self.world.floor),75,SCREEN_HEIGHT - 100, arcade.color.BLACK, 14)
+        arcade.draw_text("Floor: "+str(self.world.floor),75,SCREEN_HEIGHT - 100, arcade.color.WHITE, 14)
     
     def score(self):
-        arcade.draw_text("Score: "+str(self.world.score),75,SCREEN_HEIGHT - 120, arcade.color.BLACK, 14)
+        arcade.draw_text("Score: "+str(self.world.score),75,SCREEN_HEIGHT - 120, arcade.color.WHITE, 14)
 
     def gui(self):
         # self.draw_shield()
         self.hp_bar()
         self.power_bar()
+        self.bar_outline()
+        # self.bar()
         self.floor()
         self.score()
 
@@ -153,12 +193,9 @@ class FourElementsRunWindow(arcade.Window):
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
-                                        SCREEN_WIDTH, SCREEN_HEIGHT,
-                                        texture=arcade.load_texture('images/background.png'))
+        self.background()
         self.bullet_sprite.draw()
         self.monster_bullet_sprite.draw()
-        self.player_sprite.draw()
         if self.world.player.is_hit:
             self.player_sprite_hit().draw()
         self.draw_melee().draw()
@@ -167,6 +204,7 @@ class FourElementsRunWindow(arcade.Window):
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
         self.draw_platforms(self.world.platforms)
+        self.player_sprite.draw()
         self.gui()
         self.dead_screen()
             
