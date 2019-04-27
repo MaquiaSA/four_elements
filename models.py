@@ -465,12 +465,14 @@ class World:
         self.monster_health = 100
         self.floor = 0
         self.score = 0
+        self.floor_delay = 0
         self.setup()
     
     def setup(self):
         self.floor += 1
         self.player.x = PLAYER_STARTX
         self.player.y = PLAYER_STARTY
+        self.player.current_direction = DIR_RIGHT
         self.player.is_dead = False
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
@@ -575,7 +577,10 @@ class World:
         for mb in self.monster_bullet:
             mb.update(delta)
         if not self.monster:
-            self.setup()
+            self.floor_delay += 1
+            if self.floor_delay == 30:
+                self.setup()
+                self.floor_delay = 0
 
     
     def on_key_press(self,key,key_modifiers):
