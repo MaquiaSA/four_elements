@@ -79,17 +79,18 @@ class Model:
         self.vy = 0
         self.direction = DIR_STILL
         self.is_hit = False
+        self.is_dead = False
         self.health = None
     
     def check_dead(self):
         if self.health <= 0:
             self.is_dead = True
-        else:
-            self.is_dead = False
 
 class Player(Model):
     def __init__(self,world,x,y):
         super().__init__(world,x,y)
+        self.idle = True
+
         self.vx = PLAYER_VX
         self.current_direction = DIR_RIGHT
 
@@ -106,7 +107,8 @@ class Player(Model):
         self.dmg_reduce = 1
         self.shield = False
 
-        self.is_dead = False
+    def move(self):
+        self.x += DIR_OFFSET[self.direction] * self.vx
     
     def set_current_direction(self):
         if not self.direction == DIR_STILL:
@@ -203,7 +205,7 @@ class Player(Model):
                 self.health = 100
 
     def update(self,delta):
-        self.x += DIR_OFFSET[self.direction] * self.vx
+        self.move()
         self.check_out_of_world()
         self.set_current_direction()
 
@@ -472,8 +474,9 @@ class World:
         self.floor += 1
         self.player.x = PLAYER_STARTX
         self.player.y = PLAYER_STARTY
+        self.player.idle = True
         self.player.current_direction = DIR_RIGHT
-        self.player.is_dead = False
+        # self.player.is_dead = False
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
@@ -578,7 +581,7 @@ class World:
             mb.update(delta)
         if not self.monster:
             self.floor_delay += 1
-            if self.floor_delay == 30:
+            if self.floor_delay == 15:
                 self.setup()
                 self.floor_delay = 0
 
@@ -586,21 +589,28 @@ class World:
     def on_key_press(self,key,key_modifiers):
         if key == arcade.key.A:
             self.player.direction = DIR_LEFT
+            self.player.idle = False
         elif key == arcade.key.D:
             self.player.direction = DIR_RIGHT
+            self.player.idle = False
         elif key == arcade.key.SPACE and self.player.check_platform:
             self.player.jump()
-        elif key == arcade.key.L:
+            self.player.idle = False
+        elif key == arcade.key.K:
             bullet = PlayerBullet(self,
                 self.player.x,
                 self.player.y)
             self.bullet.append(bullet)
-        elif key == arcade.key.K:
+            self.player.idle = False
+        elif key == arcade.key.J:
             self.player_melee.frame = 0
             self.melee_attack()
+            self.player.idle = False
     
     def on_key_release(self, key, key_modifiers):
         if key == arcade.key.A and self.player.direction == DIR_LEFT:
             self.player.direction = DIR_STILL
+            self.player.idle = False
         if key == arcade.key.D and self.player.direction == DIR_RIGHT:
             self.player.direction = DIR_STILL
+            self.player.idle = False

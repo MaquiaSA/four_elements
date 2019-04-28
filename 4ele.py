@@ -70,6 +70,12 @@ class FourElementsRunWindow(arcade.Window):
                                         model=self.world.player,scale=0.24)
         return player_sprite
 
+    def draw_idle(self):
+        if self.world.player.idle:
+            arcade.draw_triangle_filled(50,130,40,147.3,60,147.3,arcade.color.LEMON_GLACIER)
+        else:
+            pass
+
     def draw_melee(self):
         melee_sprite = ModelSprite('images/melee/melee.png',model=self.world.player,scale=0.24)
         if 0 <= self.world.player_melee.frame <= MELEE_FRAME_UPDATE:
@@ -88,7 +94,6 @@ class FourElementsRunWindow(arcade.Window):
         else:
             direction = 'right'
         return ModelSprite('images/player/player-hit_'+ direction +'.png',model=self.world.player,scale=0.24)
-
 
     def draw_platforms(self, platforms):
         for p in platforms:
@@ -111,6 +116,10 @@ class FourElementsRunWindow(arcade.Window):
             direction = 'right'
         return ModelSprite('images/monster/monster-hit_'+ direction +'.png',model=m,scale=0.35)
     
+    def element_icon(self):
+        arcade.draw_xywh_rectangle_textured(15,SCREEN_HEIGHT-85,70,70,
+            arcade.load_texture('images/icon/icon-'+str(self.world.player.element)+'.png'))
+
     def draw_shield(self):
         if self.world.player.shield:
             arcade.draw_xywh_rectangle_filled(20, SCREEN_HEIGHT - 50,
@@ -122,29 +131,36 @@ class FourElementsRunWindow(arcade.Window):
                                             50,arcade.color.YELLOW)
     
     def hp_bar(self):
+        color = arcade.color.PANSY_PURPLE
+        if self.world.player.element == 0:
+            color = arcade.color.FIRE_ENGINE_RED
+        elif self.world.player.element == 1:
+            color = arcade.color.OCEAN_BOAT_BLUE
+        elif self.world.player.element == 2:
+            color = arcade.color.WINDSOR_TAN
+        elif self.world.player.element == 3:
+            color = arcade.color.SHEEN_GREEN
+        
         if self.world.player.health >= (1000/11):
             arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,
                                                 SCREEN_HEIGHT-(25+(275-(self.world.player.health)*2.75))],
                                             [325,SCREEN_HEIGHT-50],
-                                            [75,SCREEN_HEIGHT-50]],arcade.color.RED)
+                                            [75,SCREEN_HEIGHT-50]],color)
         else:
             arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-50],
-                                            [75,SCREEN_HEIGHT-50]],arcade.color.RED)
-
-        # arcade.draw_xywh_rectangle_filled(75, SCREEN_HEIGHT - 50,
-        #                                     self.world.player.health * 2.5,
-        #                                     20,arcade.color.RED)
+                                            [75,SCREEN_HEIGHT-50]],color)
+        self.draw_number(f'{self.world.player.health:.0f}'+'/100',90,SCREEN_HEIGHT-45)
 
     def power_bar(self):
         color = arcade.color.BLUE
         if self.world.player.power == 100 or self.world.player.shield:
-            color = arcade.color.HARLEQUIN
+            color = arcade.color.PUMPKIN
         else:
-            color = arcade.color.BLUE
+            color = arcade.color.LEMON
         if self.world.player.power >= (4700/49):
             arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-55],
                                             [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-55],
@@ -167,19 +183,36 @@ class FourElementsRunWindow(arcade.Window):
                                      [320,SCREEN_HEIGHT-55],
                                      [310,SCREEN_HEIGHT-65],
                                      [75,SCREEN_HEIGHT-65]],arcade.color.BLACK,border_width=2)
+        # arcade.draw_circle_filled(50,SCREEN_HEIGHT-50,35,arcade.color.WHITE)
+        # arcade.draw_circle_outline(50,SCREEN_HEIGHT-50,35,arcade.color.BLACK,border_width=2)
     
+    def draw_number(self,string,x,y,size=16,color='white'):
+        x0 = x
+        for s in string:
+            if s == '/':
+                arcade.draw_xywh_rectangle_textured(x0,y,size/2,size,
+                    arcade.load_texture('images/char/'+str(color)+'/slash.png'))
+            else:
+                arcade.draw_xywh_rectangle_textured(x0,y,size/2,size,
+                    arcade.load_texture('images/char/'+str(color)+'/'+str(s)+'.png'))
+            x0 += size/2
+
     def floor(self):
-        arcade.draw_text("Floor: "+str(self.world.floor),75,SCREEN_HEIGHT - 100, arcade.color.WHITE, 14)
+        arcade.draw_xywh_rectangle_textured(SCREEN_WIDTH-135,SCREEN_HEIGHT-45,60,20,
+            arcade.load_texture('images/char/floor.png'))
+        self.draw_number(str(self.world.floor),SCREEN_WIDTH-72,SCREEN_HEIGHT-45,20)
     
     def score(self):
-        arcade.draw_text("Score: "+str(self.world.score),75,SCREEN_HEIGHT - 120, arcade.color.WHITE, 14)
+        arcade.draw_xywh_rectangle_textured(SCREEN_WIDTH-135,SCREEN_HEIGHT-70,60,20,
+            arcade.load_texture('images/char/score.png'))
+        self.draw_number(str(self.world.score),SCREEN_WIDTH-72,SCREEN_HEIGHT-70,20)
 
     def gui(self):
         # self.draw_shield()
         self.hp_bar()
         self.power_bar()
         self.bar_outline()
-        # self.bar()
+        # self.element_icon()
         self.floor()
         self.score()
 
@@ -204,11 +237,13 @@ class FourElementsRunWindow(arcade.Window):
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
         self.draw_platforms(self.world.platforms)
+        self.draw_idle()
         self.player_sprite.draw()
         self.gui()
         self.dead_screen()
             
     def update(self, delta):
+        self.draw_idle()
         self.player_sprite = self.player()
         self.player_sprite_hit().draw()
         self.draw_melee().draw()
