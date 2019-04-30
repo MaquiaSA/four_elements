@@ -49,8 +49,6 @@ class FourElementsRunWindow(arcade.Window):
         self.setup()
     
     def setup(self):
-        arcade.set_background_color(arcade.color.GRAY)
-
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = self.player()
         self.bullet_sprite = BulletSprite(self.world.bullet)
@@ -73,6 +71,7 @@ class FourElementsRunWindow(arcade.Window):
     def draw_idle(self):
         if self.world.player.idle:
             arcade.draw_triangle_filled(50,130,40,147.3,60,147.3,arcade.color.LEMON_GLACIER)
+            arcade.draw_triangle_outline(50,130,40,147.3,60,147.3,arcade.color.WHITE,border_width=2)
         else:
             pass
 
@@ -115,12 +114,7 @@ class FourElementsRunWindow(arcade.Window):
         else:
             direction = 'right'
         return ModelSprite('images/monster/monster-hit_'+ direction +'.png',model=m,scale=0.35)
-    
-    def element_icon(self):
-        arcade.draw_xywh_rectangle_textured(15,SCREEN_HEIGHT-85,70,70,
-            arcade.load_texture('images/icon/icon-'+str(self.world.player.element)+'.png'))
 
-    def draw_shield(self):
         if self.world.player.shield:
             arcade.draw_xywh_rectangle_filled(20, SCREEN_HEIGHT - 50,
                                             50,
@@ -148,12 +142,15 @@ class FourElementsRunWindow(arcade.Window):
                                                 SCREEN_HEIGHT-(25+(275-(self.world.player.health)*2.75))],
                                             [325,SCREEN_HEIGHT-50],
                                             [75,SCREEN_HEIGHT-50]],color)
-        else:
+            self.draw_number(f'{self.world.player.health:.0f}'+'/100',90,SCREEN_HEIGHT-45)
+        elif 0 < self.world.player.health < (1000/11):
             arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-25],
                                             [75+(self.world.player.health)*2.75,SCREEN_HEIGHT-50],
                                             [75,SCREEN_HEIGHT-50]],color)
-        self.draw_number(f'{self.world.player.health:.0f}'+'/100',90,SCREEN_HEIGHT-45)
+            self.draw_number(f'{self.world.player.health:.0f}'+'/100',90,SCREEN_HEIGHT-45)
+        else:
+            self.draw_number('0/100',90,SCREEN_HEIGHT-45)
 
     def power_bar(self):
         color = arcade.color.BLUE
@@ -208,41 +205,33 @@ class FourElementsRunWindow(arcade.Window):
         self.draw_number(str(self.world.score),SCREEN_WIDTH-72,SCREEN_HEIGHT-70,20)
 
     def gui(self):
-        # self.draw_shield()
         self.hp_bar()
         self.power_bar()
         self.bar_outline()
-        # self.element_icon()
         self.floor()
         self.score()
 
-    def dead_screen(self):
+    def game_over(self):
         if self.world.player.is_dead:
-            arcade.draw_rectangle_filled(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
-                                        SCREEN_WIDTH, SCREEN_HEIGHT, arcade.color.BLACK)
-            arcade.draw_text("YOU  DIED",
-                         SCREEN_WIDTH // 2, SCREEN_HEIGHT/2 + 10, arcade.color.RED, 90, width=SCREEN_WIDTH, align="center",
-                         anchor_x="center", anchor_y="center")
+            arcade.draw_xywh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
+                arcade.load_texture("images/game_over.png"))
 
-    def on_draw(self):
-        arcade.start_render()
-        self.background()
-        self.bullet_sprite.draw()
-        self.monster_bullet_sprite.draw()
-        if self.world.player.is_hit:
-            self.player_sprite_hit().draw()
+    def draw_gameplay(self):
         self.draw_melee().draw()
+        self.draw_platforms(self.world.platforms)
+        self.draw_idle()
+        if not self.world.player.is_dead:
+            self.player_sprite.draw()
+            if self.world.player.is_hit:
+                self.player_sprite_hit().draw()
+            self.bullet_sprite.draw()
+            self.monster_bullet_sprite.draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
-        self.draw_platforms(self.world.platforms)
-        self.draw_idle()
-        self.player_sprite.draw()
-        self.gui()
-        self.dead_screen()
-            
-    def update(self, delta):
+
+    def draw_gameplay_update(self):
         self.draw_idle()
         self.player_sprite = self.player()
         self.player_sprite_hit().draw()
@@ -251,10 +240,19 @@ class FourElementsRunWindow(arcade.Window):
             self.monster_sprite(m).draw()
             if m.is_hit:
                 self.monster_sprite_hit(m).draw()
+
+    def on_draw(self):
+        arcade.start_render()
+        self.background()
+        self.draw_gameplay()
+        self.gui()
+        self.game_over()
+            
+    def update(self, delta):
+        self.draw_gameplay_update()
         self.gui()
         self.world.update(delta)
         
-    
     def on_key_press(self, key, key_modifiers):
         self.world.on_key_press(key, key_modifiers)
     

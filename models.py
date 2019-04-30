@@ -85,6 +85,8 @@ class Model:
     def check_dead(self):
         if self.health <= 0:
             self.is_dead = True
+        if self.is_dead:
+            self.health = 0
 
 class Player(Model):
     def __init__(self,world,x,y):
