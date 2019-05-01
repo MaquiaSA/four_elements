@@ -1,20 +1,8 @@
 import arcade
-from models import World
 from gameplay import Gameplay
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-
-PLATFORM_THICKNESS = 30
-GROUND_THICKNESS = 100
-PLATFORM_DRAW_THICKNESS = 10
-PLATFORM_DRAW_Y_OFFSET = 30
-
-MELEE_FRAME_UPDATE = 3
-
-DIR_STILL = 0
-DIR_RIGHT = 1
-DIR_LEFT = 2
 
 class FourElementsRunWindow(arcade.Window):
     def __init__(self, width, height):

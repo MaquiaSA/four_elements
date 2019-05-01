@@ -233,14 +233,7 @@ class Gameplay:
                 self.monster_sprite_hit(m).draw()
 
     def draw_gameplay_update(self):
-        self.draw_idle()
         self.player_sprite = self.player()
-        self.player_sprite_hit().draw()
-        self.draw_melee().draw()
-        for m in self.world.monster:
-            self.monster_sprite(m).draw()
-            if m.is_hit:
-                self.monster_sprite_hit(m).draw()
 
     def on_draw(self):
         self.background()
@@ -250,7 +243,6 @@ class Gameplay:
             
     def update(self, delta):
         self.draw_gameplay_update()
-        self.gui()
         self.world.update(delta)
         
     def on_key_press(self, key, key_modifiers):
