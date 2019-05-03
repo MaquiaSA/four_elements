@@ -105,7 +105,7 @@ class Player(Model):
         self.element = NORMAL
         self.melee_frame = 0
 
-        self.power = 90
+        self.power = 0
         self.dmg_reduce = 1
         self.shield = False
 

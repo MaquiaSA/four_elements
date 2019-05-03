@@ -43,13 +43,14 @@ class BulletSprite:
             self.bullet_sprite.draw()
 
 class Gameplay:
-    # def __init__(self):
-    #     self.world = None
-    #     self.player_sprite = None
-    #     self.bullet_sprite = None
-    #     self.monster_bullet_sprite = None
-
     def __init__(self):
+        self.world = None
+        self.player_sprite = None
+        self.bullet_sprite = None
+        self.monster_bullet_sprite = None
+        self.game_over_cover = False
+
+    def set_up(self):
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
         self.player_sprite = self.player()
         self.bullet_sprite = BulletSprite(self.world.bullet)
@@ -165,22 +166,26 @@ class Gameplay:
                                             [75+(self.world.player.power)*2.45,
                                                 SCREEN_HEIGHT-(55+(245-(self.world.player.power)*2.45))],
                                             [305,SCREEN_HEIGHT-65],
-                                            [75,SCREEN_HEIGHT-65]],color)
-        else:
+                                            [75,SCREEN_HEIGHT-65]],
+                                            color)
+        elif 0 < self.world.player.power < (4700/49):
             arcade.draw_polygon_filled([[75,SCREEN_HEIGHT-55],
                                             [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-55],
                                             [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-65],
-                                            [75,SCREEN_HEIGHT-65]],color)
+                                            [75,SCREEN_HEIGHT-65]],
+                                            color)
+        else:
+            pass
     
     def bar_outline(self):
         arcade.draw_polygon_outline([[75,SCREEN_HEIGHT-25],
                                      [350,SCREEN_HEIGHT-25],
                                      [325,SCREEN_HEIGHT-50],
-                                     [75,SCREEN_HEIGHT-50]],arcade.color.BLACK,border_width=2)
+                                     [75,SCREEN_HEIGHT-50]],arcade.color.BLACK,line_width=2)
         arcade.draw_polygon_outline([[75,SCREEN_HEIGHT-55],
                                      [320,SCREEN_HEIGHT-55],
                                      [310,SCREEN_HEIGHT-65],
-                                     [75,SCREEN_HEIGHT-65]],arcade.color.BLACK,border_width=2)
+                                     [75,SCREEN_HEIGHT-65]],arcade.color.BLACK,line_width=2)
         # arcade.draw_circle_filled(50,SCREEN_HEIGHT-50,35,arcade.color.WHITE)
         # arcade.draw_circle_outline(50,SCREEN_HEIGHT-50,35,arcade.color.BLACK,border_width=2)
     
@@ -195,37 +200,43 @@ class Gameplay:
                     arcade.load_texture('images/char/'+str(color)+'/'+str(s)+'.png'))
             x0 += size/2
 
-    def floor(self):
-        arcade.draw_xywh_rectangle_textured(SCREEN_WIDTH-135,SCREEN_HEIGHT-45,60,20,
+    def floor(self,x,y,size):
+        arcade.draw_xywh_rectangle_textured(x,y,size*3,size,
             arcade.load_texture('images/char/floor.png'))
-        self.draw_number(str(self.world.floor),SCREEN_WIDTH-72,SCREEN_HEIGHT-45,20)
+        self.draw_number(str(self.world.floor),x+size*3.1,y,size)
     
-    def score(self):
-        arcade.draw_xywh_rectangle_textured(SCREEN_WIDTH-135,SCREEN_HEIGHT-70,60,20,
+    def score(self,x,y,size):
+        arcade.draw_xywh_rectangle_textured(x,y,size*3,size,
             arcade.load_texture('images/char/score.png'))
-        self.draw_number(str(self.world.score),SCREEN_WIDTH-72,SCREEN_HEIGHT-70,20)
+        self.draw_number(str(self.world.score),x+size*3.1,y,size)
 
     def gui(self):
         self.hp_bar()
         self.power_bar()
         self.bar_outline()
-        self.floor()
-        self.score()
+        self.floor(SCREEN_WIDTH-135,SCREEN_HEIGHT-45,20)
+        self.score(SCREEN_WIDTH-135,SCREEN_HEIGHT-70,20)
 
     def game_over(self):
         if self.world.player.is_dead:
             arcade.draw_xywh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-                arcade.load_texture("images/game_over.png"))
+                arcade.load_texture("images/game_over/game_over.png"))
+            self.floor(200,SCREEN_HEIGHT//2 - 50,40)
+            self.score(SCREEN_WIDTH//2+30,SCREEN_HEIGHT//2 - 50,40)
+            if self.game_over_cover:
+                over = arcade.Sprite('images/game_over/game_over_cover.png',scale=0.24)
+                over.set_position(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
+                over.draw()
 
     def draw_gameplay(self):
         self.draw_melee().draw()
         self.draw_platforms(self.world.platforms)
         self.draw_idle()
         if not self.world.player.is_dead:
+            self.bullet_sprite.draw()
             self.player_sprite.draw()
             if self.world.player.is_hit:
                 self.player_sprite_hit().draw()
-            self.bullet_sprite.draw()
             self.monster_bullet_sprite.draw()
         for m in self.world.monster:
             self.monster_sprite(m).draw()
@@ -250,3 +261,9 @@ class Gameplay:
     
     def on_key_release(self, key, key_modifiers):
         self.world.on_key_release(key, key_modifiers)
+    
+    def on_mouse_motion(self, x, y, dx, dy):
+        if x in range(312,489) and y in range(50,100):
+            self.game_over_cover = True
+        else:
+            self.game_over_cover = False
