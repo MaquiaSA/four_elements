@@ -16,21 +16,21 @@ class FourElementsRunWindow(arcade.Window):
         self.how_cover = False
         self.gameplay = Gameplay()
 
-    def check_cover(self,x,y):
-        if x in range(75,226) and y in range(48,92):
+    def menu_cover(self,x,y):
+        if x in range(274,526) and y in range(151,204):
             self.start_cover = True
         else:
             self.start_cover = False
-        if x in range(278,429) and y in range(48,92):
+        if x in range(382,418) and y in range(87,124):
             self.how_cover = True
         else:
             self.how_cover = False
     
     def menu_press(self,x,y):
-        if x in range(75,226) and y in range(48,92):
+        if x in range(274,526) and y in range(151,204):
             self.stage = GAMEPLAY
             self.gameplay.set_up()
-        if x in range(278,429) and y in range(48,92):
+        if x in range(382,418) and y in range(87,124):
             self.stage = HOWTOPLAY
 
     def draw_menu(self):
@@ -65,7 +65,7 @@ class FourElementsRunWindow(arcade.Window):
     
     def on_mouse_motion(self, x, y, dx, dy):
         if self.stage == MENU:
-            self.check_cover(x, y)
+            self.menu_cover(x, y)
         elif self.stage == GAMEPLAY:
             self.gameplay.on_mouse_motion(x, y, dx, dy)
     
