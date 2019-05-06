@@ -3,14 +3,14 @@ from gameplay import Gameplay
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+SCREEN_TITLE = "4 Elements"
 
 MENU = 0
 GAMEPLAY = 1
 HOWTOPLAY = 2
-
 class FourElementsRunWindow(arcade.Window):
-    def __init__(self, width, height):
-        super().__init__(width, height)
+    def __init__(self, width, height, window_title):
+        super().__init__(width, height, window_title)
         self.stage = MENU
         self.all_check_cover()
         self.howto_page = 1
@@ -170,8 +170,6 @@ class FourElementsRunWindow(arcade.Window):
         self.draw_sprite(self.platform,'images/how_to/howto_2-8.png')
         self.draw_sprite(self.monster,'images/how_to/howto_2-9.png')
 
-
-
     def on_draw(self):
         arcade.start_render()
         if self.stage == MENU:
@@ -212,11 +210,8 @@ class FourElementsRunWindow(arcade.Window):
             self.howto_press(x,y)
 
 
-            
-
-
 def main():
-    window = FourElementsRunWindow(SCREEN_WIDTH, SCREEN_HEIGHT)
+    window = FourElementsRunWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.set_window(window)
     arcade.run()
 
