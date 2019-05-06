@@ -8,6 +8,29 @@ SCREEN_TITLE = "4 Elements"
 MENU = 0
 GAMEPLAY = 1
 HOWTOPLAY = 2
+
+
+class Sound:
+    def __init__(self):
+        self.sound_play = 0
+        self.hover_sound = arcade.load_sound("sounds/menu/hover.wav")
+        self.select_sound = arcade.load_sound("sounds/menu/select.wav")
+    
+    def play_hover(self):
+        if self.sound_play == 0:
+            arcade.play_sound(self.hover_sound)
+            self.sound_play += 1
+    
+    def play_select(self):
+        if self.sound_play == 1:
+            arcade.play_sound(self.select_sound)
+            self.sound_play += 1
+    
+    def reset_sound_play(self):
+        self.sound_play = 0
+
+
+
 class FourElementsRunWindow(arcade.Window):
     def __init__(self, width, height, window_title):
         super().__init__(width, height, window_title)
@@ -15,6 +38,7 @@ class FourElementsRunWindow(arcade.Window):
         self.all_check_cover()
         self.howto_page = 1
         self.gameplay = Gameplay()
+        self.sound_fx = Sound()
     
     def all_check_cover(self):
         self.start_cover = False
@@ -99,7 +123,7 @@ class FourElementsRunWindow(arcade.Window):
         else:
             self.monster = False
 
-    def menu_cover(self,x,y):
+    def menu_hover(self,x,y):
         if x in range(274,526) and y in range(151,204):
             self.start_cover = True
         else:
@@ -108,13 +132,30 @@ class FourElementsRunWindow(arcade.Window):
             self.how_cover = True
         else:
             self.how_cover = False
+        
+        if x in range(274,526) and y in range(151,204):
+            self.sound_fx.play_hover()
+        elif x in range(382,418) and y in range(87,124):
+            self.sound_fx.play_hover()
+        else:
+            self.sound_fx.reset_sound_play()
+
     
     def menu_press(self,x,y):
         if x in range(274,526) and y in range(151,204):
             self.stage = GAMEPLAY
             self.gameplay.set_up()
-        if x in range(382,418) and y in range(87,124):
+        elif x in range(382,418) and y in range(87,124):
+            self.sound_fx.play_select()
             self.stage = HOWTOPLAY
+        
+        if x in range(274,526) and y in range(151,204):
+            self.sound_fx.play_select()
+            self.sound_fx.reset_sound_play()
+        elif x in range(382,418) and y in range(87,124):
+            self.sound_fx.play_select()
+            self.sound_fx.reset_sound_play()
+        
     
     def howto_press(self,x,y):
         if 1 <= self.howto_page <= 3:
@@ -123,7 +164,7 @@ class FourElementsRunWindow(arcade.Window):
             if x in range(707,781) and y in range(274,325):
                 self.howto_page += 1
 
-    def howto_arrow_cover(self,x,y):
+    def howto_arrow_hover(self,x,y):
         if x in range(22,96) and y in range(274,325):
             self.howto_left = True
         else:
@@ -192,11 +233,11 @@ class FourElementsRunWindow(arcade.Window):
     
     def on_mouse_motion(self, x, y, dx, dy):
         if self.stage == MENU:
-            self.menu_cover(x, y)
+            self.menu_hover(x, y)
         elif self.stage == GAMEPLAY:
             self.gameplay.on_mouse_motion(x, y, dx, dy)
         elif self.stage == HOWTOPLAY:
-            self.howto_arrow_cover(x, y)
+            self.howto_arrow_hover(x, y)
             if self.howto_page == 2:
                 self.all_howto_interface(x, y)
     
