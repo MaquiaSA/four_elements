@@ -1,4 +1,5 @@
 import arcade
+import arcade.key
 from models import World
 
 SCREEN_WIDTH = 800
@@ -42,6 +43,54 @@ class BulletSprite:
             self.bullet_sprite.set_position(b.x,b.y)
             self.bullet_sprite.draw()
 
+class Sound:
+    def __init__(self):
+        self.health_play = 0
+        self.floor_play = 0
+        self.power_play = 0
+        self.power_full_sound = arcade.load_sound("sounds/gameplay/power_full.wav")
+        self.power_proc_sound = arcade.load_sound("sounds/gameplay/power_proc.wav")
+        self.low_health_sound = arcade.load_sound("sounds/gameplay/low_health.wav")
+        self.next_floor_sound = arcade.load_sound("sounds/gameplay/next.wav")
+        self.melee_sound = arcade.load_sound("sounds/gameplay/melee.wav")
+        self.range_sound = arcade.load_sound("sounds/gameplay/range.wav")
+
+    def play_pw_full(self):
+        if self.power_play == 0:
+            arcade.play_sound(self.power_full_sound)
+            self.power_play += 1
+    
+    def play_pw_proc(self):
+        if self.power_play == 1:
+            arcade.play_sound(self.power_proc_sound)
+            self.power_play += 1
+    
+    def play_low_hp(self):
+        if self.health_play == 0:
+            arcade.play_sound(self.low_health_sound)
+            self.health_play += 1
+
+    def play_next_floor(self):
+        if self.floor_play == 0:
+            arcade.play_sound(self.next_floor_sound)
+            self.floor_play += 1
+
+    def play_melee(self):
+        arcade.play_sound(self.melee_sound)
+    
+    def play_range(self):
+        arcade.play_sound(self.range_sound)
+
+    def reset_health_play(self):
+        self.health_play = 0
+        
+    def reset_power_play(self):
+        self.power_play = 0
+        
+    def reset_floor_play(self):
+        self.floor_play = 0
+
+
 class Gameplay:
     def __init__(self):
         self.world = None
@@ -49,6 +98,7 @@ class Gameplay:
         self.bullet_sprite = None
         self.monster_bullet_sprite = None
         self.game_over_cover = False
+        self.sound = Sound()
 
     def set_up(self):
         self.world = World(SCREEN_WIDTH,SCREEN_HEIGHT)
@@ -223,10 +273,6 @@ class Gameplay:
                 arcade.load_texture("images/game_over/game_over.png"))
             self.floor(200,SCREEN_HEIGHT//2 - 50,40)
             self.score(SCREEN_WIDTH//2+30,SCREEN_HEIGHT//2 - 50,40)
-            if self.game_over_cover:
-                over = arcade.Sprite('images/game_over/game_over_cover.png',scale=0.24)
-                over.set_position(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
-                over.draw()
 
     def draw_gameplay(self):
         self.draw_melee().draw()
@@ -245,6 +291,28 @@ class Gameplay:
 
     def draw_gameplay_update(self):
         self.player_sprite = self.player()
+    
+    def sound_fx(self):
+        if self.world.player.health <= 30 and not self.world.player.is_dead:
+            self.sound.play_low_hp()
+        else:
+            self.sound.reset_health_play()
+        if not self.world.monster:
+            self.sound.play_next_floor()
+        else:
+            self.sound.reset_floor_play()
+        if self.world.player.power == 100:
+            self.sound.play_pw_full()
+        elif self.world.player.shield:
+            self.sound.play_pw_proc()
+        else:
+            self.sound.reset_power_play()
+    
+    def sound_on_key_press(self, key, key_modifiers):
+        if key == arcade.key.J:
+            self.sound.play_melee()
+        if key == arcade.key.K:
+            self.sound.play_range()
 
     def on_draw(self):
         self.background()
@@ -254,16 +322,12 @@ class Gameplay:
             
     def update(self, delta):
         self.draw_gameplay_update()
+        self.sound_fx()
         self.world.update(delta)
         
     def on_key_press(self, key, key_modifiers):
         self.world.on_key_press(key, key_modifiers)
+        self.sound_on_key_press(key, key_modifiers)
     
     def on_key_release(self, key, key_modifiers):
         self.world.on_key_release(key, key_modifiers)
-    
-    def on_mouse_motion(self, x, y, dx, dy):
-        if x in range(312,489) and y in range(50,100):
-            self.game_over_cover = True
-        else:
-            self.game_over_cover = False

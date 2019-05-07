@@ -317,9 +317,9 @@ class MonsterBullet(Bullet):
                 (self.world.floor/2) *\
                     ELEMENT_OFFSET[self.monster.element][self.world.player.element] *\
                     self.world.player.dmg_reduce
-        if abs(self.x - self.init_x) >= BULLET_RANGE:
+        elif abs(self.x - self.init_x) >= BULLET_RANGE:
             self.world.monster_bullet.remove(self)
-        if self.out_of_world() and self.world.monster_bullet != []:
+        elif self.out_of_world() and self.world.monster_bullet != []:
             self.world.monster_bullet.remove(self)
 
 
@@ -478,7 +478,7 @@ class World:
         self.player.y = PLAYER_STARTY
         self.player.idle = True
         self.player.current_direction = DIR_RIGHT
-        # self.player.is_dead = False
+        self.player.is_dead = False
         self.platforms = self.platform_top() + \
             self.platform_mid() + self.platform_bot()
         self.monster = self.generate_monster()
@@ -583,7 +583,7 @@ class World:
             mb.update(delta)
         if not self.monster:
             self.floor_delay += 1
-            if self.floor_delay == 15:
+            if self.floor_delay == 20:
                 self.setup()
                 self.floor_delay = 0
 
