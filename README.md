@@ -1,5 +1,5 @@
 # **4 Elements**
-## **Steal their strength and stay alive!**
+### _**Steal their strength and stay alive!**_
 ![menu](images/logo.png)
 _4 Elements_ is a 2D RPG game create with Python and Arcade library.
 
