@@ -485,7 +485,7 @@ class World:
 
     
     def platform_top(self):
-        x1,y1,width1 = rint(0,4),rint(8,9),rint(4,6)
+        x1,y1,width1 = rint(0,4),rint(8,9),rint(4,5)
         x2,y2,width2 = rint(10,12),rint(8,9),rint(4,6)
         return [self.platform_grid(x1,y1,width1),
                 self.platform_grid(x2,y2,width2)]

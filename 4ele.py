@@ -206,9 +206,12 @@ class FourElementsRunWindow(arcade.Window):
         arcade.draw_xywh_rectangle_textured(0,0,SCREEN_WIDTH,SCREEN_HEIGHT,
             arcade.load_texture('images/menu/menu.png'))
         self.draw_sprite(self.gameplay.enable_sound,'images/menu/sound_on.png')
-        self.draw_sprite(not self.gameplay.enable_sound,'images/menu/sound_off.png')
-        self.draw_sprite(self.gameplay.enable_sound and self.sound_onoff_cover,'images/menu/sound_on_cover.png')
-        self.draw_sprite(not self.gameplay.enable_sound and self.sound_onoff_cover,'images/menu/sound_off_cover.png')
+        self.draw_sprite(not self.gameplay.enable_sound,
+            'images/menu/sound_off.png')
+        self.draw_sprite(self.gameplay.enable_sound and self.sound_onoff_cover,
+            'images/menu/sound_on_cover.png')
+        self.draw_sprite(not self.gameplay.enable_sound and self.sound_onoff_cover,
+            'images/menu/sound_off_cover.png')
         self.draw_sprite(self.start_cover,'images/menu/start_cover.png')
         self.draw_sprite(self.how_cover,'images/menu/how_cover.png')
         
@@ -304,7 +307,7 @@ class FourElementsRunWindow(arcade.Window):
             self.draw_howto()
             
     def update(self, delta):
-        self.set_update_rate(1/70)
+        # self.set_update_rate(1/70)
         if self.stage == GAMEPLAY:
             self.gameplay.update(delta)
         
@@ -341,6 +344,7 @@ def main():
     window = FourElementsRunWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.set_window(window)
     arcade.run()
+
 
 if __name__ == '__main__':
     main()
