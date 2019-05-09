@@ -63,6 +63,7 @@ class FourElementsRunWindow(arcade.Window):
         self.howto_left = False
         self.howto_right = False
         self.game_over_cover = False
+        self.sound_onoff_cover = False
         self.howto_gui_cover()
 
     def howto_gui_cover(self):
@@ -151,6 +152,11 @@ class FourElementsRunWindow(arcade.Window):
             self.how_cover = True
         else:
             self.how_cover = False
+        if x in range(750,785) and y in range(15,50):
+            self.sound_onoff_cover = True
+        else:
+            self.sound_onoff_cover = False
+
         
     def menu_press(self,x,y):
         if x in range(274,526) and y in range(151,204):
@@ -158,6 +164,8 @@ class FourElementsRunWindow(arcade.Window):
             self.gameplay.set_up()
         elif x in range(382,418) and y in range(87,124):
             self.stage = HOWTOPLAY
+        elif x in range(750,785) and y in range(15,50):
+            self.gameplay.enable_sound = not self.gameplay.enable_sound
         
     def game_over_press(self,x,y):
         if self.gameplay.world.player.is_dead:
@@ -197,6 +205,10 @@ class FourElementsRunWindow(arcade.Window):
     def draw_menu(self):
         arcade.draw_xywh_rectangle_textured(0,0,SCREEN_WIDTH,SCREEN_HEIGHT,
             arcade.load_texture('images/menu/menu.png'))
+        self.draw_sprite(self.gameplay.enable_sound,'images/menu/sound_on.png')
+        self.draw_sprite(not self.gameplay.enable_sound,'images/menu/sound_off.png')
+        self.draw_sprite(self.gameplay.enable_sound and self.sound_onoff_cover,'images/menu/sound_on_cover.png')
+        self.draw_sprite(not self.gameplay.enable_sound and self.sound_onoff_cover,'images/menu/sound_off_cover.png')
         self.draw_sprite(self.start_cover,'images/menu/start_cover.png')
         self.draw_sprite(self.how_cover,'images/menu/how_cover.png')
         
@@ -303,7 +315,8 @@ class FourElementsRunWindow(arcade.Window):
         self.gameplay.on_key_release(key, key_modifiers)
     
     def on_mouse_motion(self, x, y, dx, dy):
-        self.sound_on_mouse_motion(x,y,dx,dy)
+        if self.gameplay.enable_sound:
+            self.sound_on_mouse_motion(x,y,dx,dy)
         if self.stage == MENU:
             self.menu_hover(x, y)
         elif self.stage == GAMEPLAY:
@@ -314,7 +327,8 @@ class FourElementsRunWindow(arcade.Window):
                 self.all_howto_interface(x, y)
     
     def on_mouse_press(self, x, y, button, modifiers):
-        self.sound_on_mouse_press(x,y)
+        if self.gameplay.enable_sound:
+            self.sound_on_mouse_press(x,y)
         if self.stage == MENU:
             self.menu_press(x,y)
         if self.stage == GAMEPLAY:

@@ -98,6 +98,7 @@ class Gameplay:
         self.bullet_sprite = None
         self.monster_bullet_sprite = None
         self.game_over_cover = False
+        self.enable_sound = False
         self.sound = Sound()
 
     def set_up(self):
@@ -215,7 +216,7 @@ class Gameplay:
                                             [75+(self.world.player.power)*2.45,SCREEN_HEIGHT-55],
                                             [75+(self.world.player.power)*2.45,
                                                 SCREEN_HEIGHT-(55+(245-(self.world.player.power)*2.45))],
-                                            [305,SCREEN_HEIGHT-65],
+                                            [310,SCREEN_HEIGHT-65],
                                             [75,SCREEN_HEIGHT-65]],
                                             color)
         elif 0 < self.world.player.power < (4700/49):
@@ -322,12 +323,14 @@ class Gameplay:
             
     def update(self, delta):
         self.draw_gameplay_update()
-        self.sound_fx()
+        if self.enable_sound:
+            self.sound_fx()
         self.world.update(delta)
         
     def on_key_press(self, key, key_modifiers):
         self.world.on_key_press(key, key_modifiers)
-        self.sound_on_key_press(key, key_modifiers)
+        if self.enable_sound:
+            self.sound_on_key_press(key, key_modifiers)
     
     def on_key_release(self, key, key_modifiers):
         self.world.on_key_release(key, key_modifiers)
